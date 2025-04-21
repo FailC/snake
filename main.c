@@ -105,7 +105,9 @@ int main() {
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     const float SPEED = 5.0f;
     Player player = {p_rect, .score = 0, SPEED};
-    Rectangle rect = spawn_block();
+    Rectangle eating_rect = spawn_block();
+
+    Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
     int x, y;
 
@@ -119,30 +121,63 @@ int main() {
         // debug
         printf("pos: %f : %f\n", player.rect.x, player.rect.y);
 
-        if (CheckCollisionRecs(player.rect, rect)) {
-            rect = spawn_block();
-            // score++
-            // player gets longer
+        if (CheckCollisionRecs(player.rect, eating_rect)) {
+            eating_rect = spawn_block();
+            player.score++;
+            // spawn more blocks
+        }
+
+        // create ghost rect for drawing
+        if (player.rect.x + rectSize > SCREEN_WIDTH) {
+            ghost_rect.x = player.rect.x - SCREEN_WIDTH;
+            ghost_rect.y = player.rect.y;
+
+        }
+        if (player.rect.x < rectSize) {
+            ghost_rect.x = player.rect.x + SCREEN_WIDTH;
+            ghost_rect.y = player.rect.y;
+        }
+        if (player.rect.y + rectSize > SCREEN_HEIGHT) {
+            ghost_rect.x = player.rect.x;
+            ghost_rect.y = player.rect.y - SCREEN_HEIGHT;
+        }
+        if (player.rect.y < rectSize) {
+            ghost_rect.x = player.rect.x;
+            ghost_rect.y = player.rect.y + SCREEN_HEIGHT;
         }
 
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
             DrawRectangleRec(player.rect, BLACK);
+
+            // :thinking:
             if (player.rect.x + rectSize > SCREEN_WIDTH) {
-                DrawRectangle((int)(player.rect.x - SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+                DrawRectangleRec(ghost_rect, BLACK);
+                if (CheckCollisionRecs(ghost_rect, eating_rect)) {
+                    eating_rect= spawn_block();
+                }
             }
             if (player.rect.x < rectSize) {
-                DrawRectangle((int)(player.rect.x + SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+                DrawRectangleRec(ghost_rect, BLACK);
+                if (CheckCollisionRecs(ghost_rect, eating_rect)) {
+                    eating_rect = spawn_block();
+                }
             }
             if (player.rect.y + rectSize > SCREEN_HEIGHT) {
-                DrawRectangle((int)player.rect.x, (int)(player.rect.y - SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+                DrawRectangleRec(ghost_rect, BLACK);
+                if (CheckCollisionRecs(ghost_rect, eating_rect)) {
+                    eating_rect = spawn_block();
+                }
             }
             if (player.rect.y < rectSize) {
-                DrawRectangle((int)player.rect.x, (int)(player.rect.y + SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+                DrawRectangleRec(ghost_rect, BLACK);
+                if (CheckCollisionRecs(ghost_rect, eating_rect)) {
+                    eating_rect = spawn_block();
+                }
             }
-            DrawRectangleRec(rect, RED);
-            // DrawGrid(10, 10);
+
+            DrawRectangleRec(eating_rect, RED);
             DrawFPS(10, 10);
 
             // char buffer[50];
