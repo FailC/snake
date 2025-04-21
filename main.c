@@ -4,7 +4,7 @@
 const int SCREEN_WIDTH = 900;
 const int SCREEN_HEIGHT = 500;
 
-const int GRIDSIZE= 50;
+const int GRIDSIZE = 50;
 
 typedef struct {
     Rectangle rect;
@@ -109,14 +109,8 @@ Vector2 get_history_pos(int steps_back) {
     return pos_history[i];
 }
 
-#define NUM_FOLLOWERS 3
-int follower_delay[NUM_FOLLOWERS] = {10, 20, 30};
-Vector2 follower_pos[NUM_FOLLOWERS];
-
-
 int main() {
-
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "snake!!");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
     // SetTargetFPS(10);
                       // pos,   width
@@ -125,15 +119,18 @@ int main() {
     Player player = {p_rect, .score = 0, SPEED};
 
     Rectangle eating_rect = spawn_block();
-
-    // int steps_behind = GRIDSIZE / SPEED;
     Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
+    // int steps_behind = GRIDSIZE / SPEED;
     int size = 30;
     Vector2 pos[size];
-    // for i in player.score {rect_array[i]}
 
-    // Rectangle second_rect = { pos[steps_behind].x,pos[steps_behind].y, GRIDSIZE, GRIDSIZE };
+    Vector2 follower_pos[player.score];
+    int follower_delay[player.score];
+    for (int i = 1; i <= player.score; ++i) {
+        follower_delay[i] = 10 * i;
+        printf("delay: %d\n", follower_delay[i]);
+    }
 
     bool spawn = false;
     int rectSize = player.rect.height;
@@ -146,7 +143,7 @@ int main() {
         wrap_player(&player);
         save_pos((Vector2){ player.rect.x, player.rect.y });
 
-        printf("%f : %f\n", player.rect.x, player.rect.y);
+        // printf("%f : %f\n", player.rect.x, player.rect.y);
 
         if (CheckCollisionRecs(player.rect, eating_rect)) {
             eating_rect = spawn_block();
@@ -208,7 +205,7 @@ int main() {
                 }
             }
 
-            for (int i = 0; i < NUM_FOLLOWERS; ++i) {
+            for (int i = 0; i < player.score; ++i) {
                 int delay = follower_delay[i];
                 if (delay < SIZE) {
                     follower_pos[i] = get_history_pos(delay);
