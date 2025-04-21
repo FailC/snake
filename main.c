@@ -4,7 +4,7 @@
 const int SCREEN_WIDTH = 900;
 const int SCREEN_HEIGHT = 500;
 
-const int GRIDSIZE= 30;
+const int GRIDSIZE= 50;
 
 typedef struct {
     Rectangle rect;
@@ -76,9 +76,6 @@ void wrap_player(Player *player) {
     if (player->rect.y < -player->rect.height) player->rect.y = SCREEN_HEIGHT - rectSize;
 }
 
-
-
-
 int GetRandomDivisible(int divisor, int min, int max) {
     int start = (min + divisor - 1) / divisor; // ceil(min / divisor)
     int end = max / divisor;                  // floor(max / divisor)
@@ -96,6 +93,17 @@ Rectangle spawn_block() {
 }
 
 
+#define SIZE 10
+Vector2 pos_history[SIZE];
+int index_g = 0;
+bool history_full = false;
+
+void save_pos(Vector2 pos) {
+    pos_history[index_g] = pos;
+    index_g = (index_g + 1) % SIZE;
+    if (index_g == 0) history_full = true;
+}
+
 int main() {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "snake!!");
@@ -105,33 +113,46 @@ int main() {
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     const float SPEED = 5.0f;
     Player player = {p_rect, .score = 0, SPEED};
+
     Rectangle eating_rect = spawn_block();
+
+    int steps_behind = GRIDSIZE / SPEED;
+
+
 
     Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
-    int x, y;
+    int size = 30;
+    Vector2 pos[size];
+    // for i in player.score {rect_array[i]}
 
+    // Rectangle second_rect = { pos[steps_behind].x,pos[steps_behind].y, GRIDSIZE, GRIDSIZE };
+
+    bool spawn = false;
     int rectSize = player.rect.height;
+
     while (!WindowShouldClose()) {
 
+        spawn = false;
         // changes rect.x, rect.y
         move_player(&player);
         wrap_player(&player);
+        save_pos((Vector2){ player.rect.x, player.rect.y });
 
+        Rectangle second_rect = { pos[steps_behind].x,pos[steps_behind].y, GRIDSIZE, GRIDSIZE };
         // debug
-        printf("pos: %f : %f\n", player.rect.x, player.rect.y);
+        printf("%f : %f\n", player.rect.x, player.rect.y);
 
         if (CheckCollisionRecs(player.rect, eating_rect)) {
             eating_rect = spawn_block();
             player.score++;
-            // spawn more blocks
+            spawn = true;
         }
 
         // create ghost rect for drawing
         if (player.rect.x + rectSize > SCREEN_WIDTH) {
             ghost_rect.x = player.rect.x - SCREEN_WIDTH;
             ghost_rect.y = player.rect.y;
-
         }
         if (player.rect.x < rectSize) {
             ghost_rect.x = player.rect.x + SCREEN_WIDTH;
@@ -146,35 +167,59 @@ int main() {
             ghost_rect.y = player.rect.y + SCREEN_HEIGHT;
         }
 
+        // rect_array[0].x = player.rect.x;
+        // rect_array[0].y = player.rect.y;
+        // rect_array[1] = rect_2;
+
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
             DrawRectangleRec(player.rect, BLACK);
+            // DrawRectangleRec(second_rect, RED);
+            // DrawRectangleRec(rect_array[0], BLACK);
+
+            for (int i = 0; i < (history_full ? SIZE : index_g); i++) {
+                int index = (index_g - 1 - i + SIZE) % SIZE;
+                Vector2 pos = pos_history[index_g];
+
+                // Do something with pos, e.g. draw ghost trail
+                // DrawCircleV(pos, 4, Fade(BLACK, 1.0f - (float)i / SIZE));
+                DrawRectangleV(pos, (Vector2){ GRIDSIZE, GRIDSIZE}, BLACK);
+            }
+
 
             // :thinking:
             if (player.rect.x + rectSize > SCREEN_WIDTH) {
                 DrawRectangleRec(ghost_rect, BLACK);
                 if (CheckCollisionRecs(ghost_rect, eating_rect)) {
                     eating_rect= spawn_block();
+                    spawn = true;
                 }
             }
             if (player.rect.x < rectSize) {
                 DrawRectangleRec(ghost_rect, BLACK);
                 if (CheckCollisionRecs(ghost_rect, eating_rect)) {
                     eating_rect = spawn_block();
+                    spawn = true;
                 }
             }
             if (player.rect.y + rectSize > SCREEN_HEIGHT) {
                 DrawRectangleRec(ghost_rect, BLACK);
                 if (CheckCollisionRecs(ghost_rect, eating_rect)) {
                     eating_rect = spawn_block();
+                    spawn = true;
                 }
             }
             if (player.rect.y < rectSize) {
                 DrawRectangleRec(ghost_rect, BLACK);
                 if (CheckCollisionRecs(ghost_rect, eating_rect)) {
                     eating_rect = spawn_block();
+                    spawn = true;
                 }
+            }
+
+            if (spawn) {
+            // spawn more blocks
             }
 
             DrawRectangleRec(eating_rect, RED);
