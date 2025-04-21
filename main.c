@@ -2,11 +2,10 @@
 #include "./raylib-5.5_linux_amd64/include/raylib.h"
 #include "lib.c"
 
-
+#define FOLLOWER 250
 #define SIZE 2500
 Vector2 pos_history[SIZE];
 int index_g = 0;
-bool history_full = false;
 
 void save_pos(Vector2 pos) {
     pos_history[index_g] = pos;
@@ -18,21 +17,40 @@ Vector2 get_history_pos(int steps_back) {
     return pos_history[i];
 }
 
+void game_over(Player *player) {
+    player->PLAYER_SPEED = 0;
+}
+
+float SPEED = 5.0f;
+
+void game_restart(Player *player) {
+    // pos_history
+    // bool
+    // index_g
+    // player, position, speed
+
+    index_g = 0;
+    for (int i = 0; i < SIZE; ++i) {
+        pos_history[i] = (Vector2) {0.0f, 0.0f };
+    }
+    player->score = 0;
+    player->PLAYER_SPEED = SPEED;
+
+}
+
 int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
     // SetTargetFPS(10);
     printf("Hello solid snake!\n");
+
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
-    const float SPEED = 5.0f;
     Player player = {p_rect, .score = 0, SPEED};
 
-    // Rectangle eating_rect = spawn_block();
     Rectangle eating_rect;
-
     Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
-    int follower_count = 250;
+    int follower_count = FOLLOWER;
     Vector2 follower_pos[follower_count];
     int follower_delay[follower_count];
 
@@ -43,6 +61,7 @@ int main() {
     int rectSize = player.rect.height;
     bool score = false;
     bool spawn = true;
+    bool game_is_over = false;
 
     while (!WindowShouldClose()) {
 
@@ -50,6 +69,15 @@ int main() {
         move_player(&player);
         wrap_player(&player);
         save_pos((Vector2){ player.rect.x, player.rect.y });
+
+        if (game_is_over && IsKeyPressed(KEY_SPACE)) {
+            game_restart(&player);
+            
+
+            score = false;
+            spawn = true;
+            game_is_over = false;
+        }
 
         // printf("%f : %f\n", player.rect.x, player.rect.y);
 
@@ -78,11 +106,11 @@ int main() {
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
-            DrawRectangleRec(player.rect, BLACK);
-            // DrawRectangleRec(second_rect, RED);
-            // DrawRectangleRec(rect_array[0], BLACK);
-
-            // :thinking:
+            if (!game_is_over) {
+                DrawRectangleRec(player.rect, BLACK);
+            } else {
+                DrawRectangleRec(player.rect, RED);
+            }
 
             if (player.rect.x + rectSize > SCREEN_WIDTH ||
                 player.rect.x < rectSize ||
@@ -99,17 +127,19 @@ int main() {
                 int delay = follower_delay[i];
                 if (delay < SIZE) {
                     follower_pos[i] = get_history_pos(delay);
-                    DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, DARKGRAY);
+                    if (!game_is_over) {
+                        DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, DARKGRAY);
+                    } else {
+                        DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, RED);
+                    }
                     Rectangle temp = {follower_pos[i].x, follower_pos[i].y, GRIDSIZE, GRIDSIZE};
                     if (CheckCollisionRecs(temp, eating_rect)) {
                         score = true;
                         spawn = true;
-                        // printf("EAT ME\n");
-                        break;
                     }
                     if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
-                        // printf("COLLISION\n");
-                        // game over
+                        game_over(&player);
+                        game_is_over = true;
                     }
                 }
             }
@@ -119,6 +149,10 @@ int main() {
             DrawFPS(10, 10);
             spawn = false;
             score = false;
+
+            if (game_is_over) {
+                DrawText("GAME OVER!",100,100, 20, BLACK);
+            }
 
             char buffer[50];
             snprintf(buffer, sizeof(buffer), "%d" , player.score * 100);

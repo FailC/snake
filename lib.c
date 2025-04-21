@@ -9,7 +9,7 @@ int move_key = KEY_DOWN;
 typedef struct {
     Rectangle rect;
     int score;
-    const float PLAYER_SPEED;
+    float PLAYER_SPEED;
 } Player;
 
 void move_player(Player *player) {
