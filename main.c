@@ -93,7 +93,7 @@ Rectangle spawn_block() {
 }
 
 
-#define SIZE 10
+#define SIZE 500
 Vector2 pos_history[SIZE];
 int index_g = 0;
 bool history_full = false;
@@ -101,8 +101,18 @@ bool history_full = false;
 void save_pos(Vector2 pos) {
     pos_history[index_g] = pos;
     index_g = (index_g + 1) % SIZE;
-    if (index_g == 0) history_full = true;
+    // if (index_g == 0) history_full = true;
 }
+
+Vector2 get_history_pos(int steps_back) {
+    int i = (index_g - steps_back + SIZE) % SIZE;
+    return pos_history[i];
+}
+
+#define NUM_FOLLOWERS 3
+int follower_delay[NUM_FOLLOWERS] = {10, 20, 30};
+Vector2 follower_pos[NUM_FOLLOWERS];
+
 
 int main() {
 
@@ -116,10 +126,7 @@ int main() {
 
     Rectangle eating_rect = spawn_block();
 
-    int steps_behind = GRIDSIZE / SPEED;
-
-
-
+    // int steps_behind = GRIDSIZE / SPEED;
     Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
     int size = 30;
@@ -139,8 +146,6 @@ int main() {
         wrap_player(&player);
         save_pos((Vector2){ player.rect.x, player.rect.y });
 
-        Rectangle second_rect = { pos[steps_behind].x,pos[steps_behind].y, GRIDSIZE, GRIDSIZE };
-        // debug
         printf("%f : %f\n", player.rect.x, player.rect.y);
 
         if (CheckCollisionRecs(player.rect, eating_rect)) {
@@ -148,7 +153,6 @@ int main() {
             player.score++;
             spawn = true;
         }
-
         // create ghost rect for drawing
         if (player.rect.x + rectSize > SCREEN_WIDTH) {
             ghost_rect.x = player.rect.x - SCREEN_WIDTH;
@@ -167,26 +171,12 @@ int main() {
             ghost_rect.y = player.rect.y + SCREEN_HEIGHT;
         }
 
-        // rect_array[0].x = player.rect.x;
-        // rect_array[0].y = player.rect.y;
-        // rect_array[1] = rect_2;
-
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
             DrawRectangleRec(player.rect, BLACK);
             // DrawRectangleRec(second_rect, RED);
             // DrawRectangleRec(rect_array[0], BLACK);
-
-            for (int i = 0; i < (history_full ? SIZE : index_g); i++) {
-                int index = (index_g - 1 - i + SIZE) % SIZE;
-                Vector2 pos = pos_history[index_g];
-
-                // Do something with pos, e.g. draw ghost trail
-                // DrawCircleV(pos, 4, Fade(BLACK, 1.0f - (float)i / SIZE));
-                DrawRectangleV(pos, (Vector2){ GRIDSIZE, GRIDSIZE}, BLACK);
-            }
-
 
             // :thinking:
             if (player.rect.x + rectSize > SCREEN_WIDTH) {
@@ -218,6 +208,14 @@ int main() {
                 }
             }
 
+            for (int i = 0; i < NUM_FOLLOWERS; ++i) {
+                int delay = follower_delay[i];
+                if (delay < SIZE) {
+                    follower_pos[i] = get_history_pos(delay);
+                    DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, DARKGRAY);
+                }
+            }
+
             if (spawn) {
             // spawn more blocks
             }
@@ -228,7 +226,6 @@ int main() {
             // char buffer[50];
             // snprintf(buffer, sizeof(buffer), "%d" , player.score);
             // DrawText(buffer,(float)SCREEN_WIDTH/2 - 50, 10, 20, BLACK);
-            // DrawText(buffer_2, (float)SCREEN_WIDTH/2 + 50, 10, 20, BLACK);
         EndDrawing();
     }
 
