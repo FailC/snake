@@ -89,4 +89,3 @@ Rectangle spawn_block() {
     return rect;
 }
 
-
