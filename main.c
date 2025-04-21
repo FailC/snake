@@ -3,7 +3,7 @@
 #include "lib.c"
 
 
-#define SIZE 500
+#define SIZE 2500
 Vector2 pos_history[SIZE];
 int index_g = 0;
 bool history_full = false;
@@ -22,7 +22,7 @@ int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
     // SetTargetFPS(10);
-                      // pos,   width
+    printf("Hello solid snake!\n");
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     const float SPEED = 5.0f;
     Player player = {p_rect, .score = 0, SPEED};
@@ -32,7 +32,7 @@ int main() {
 
     Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
-    int follower_count = 500;
+    int follower_count = 250;
     Vector2 follower_pos[follower_count];
     int follower_delay[follower_count];
 
@@ -102,27 +102,27 @@ int main() {
                     DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, DARKGRAY);
                     Rectangle temp = {follower_pos[i].x, follower_pos[i].y, GRIDSIZE, GRIDSIZE};
                     if (CheckCollisionRecs(temp, eating_rect)) {
-                        //eating_rect = spawn_block();
                         score = true;
+                        spawn = true;
+                        // printf("EAT ME\n");
                         break;
                     }
                     if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
                         // printf("COLLISION\n");
+                        // game over
                     }
                 }
             }
             if (score) player.score++;
-            if (spawn) {
-                eating_rect = spawn_block();
-            }
+            if (spawn) eating_rect = spawn_block();
             DrawRectangleRec(eating_rect, RED);
             DrawFPS(10, 10);
             spawn = false;
             score = false;
 
-            // char buffer[50];
-            // snprintf(buffer, sizeof(buffer), "%d" , player.score);
-            // DrawText(buffer,(float)SCREEN_WIDTH/2 - 50, 10, 20, BLACK);
+            char buffer[50];
+            snprintf(buffer, sizeof(buffer), "%d" , player.score * 100);
+            DrawText(buffer, 150, 10, 20, BLACK);
         EndDrawing();
     }
 
