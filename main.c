@@ -68,6 +68,16 @@ void move_player(Player *player) {
     }
 }
 
+void wrap_player(Player *player) {
+    int rectSize = player->rect.height;
+    if (player->rect.x > SCREEN_WIDTH) player->rect.x = 0;
+    if (player->rect.x < -player->rect.width) player->rect.x = SCREEN_WIDTH - rectSize;
+    if (player->rect.y > SCREEN_HEIGHT) player->rect.y = 0;
+    if (player->rect.y < -player->rect.height) player->rect.y = SCREEN_HEIGHT - rectSize;
+}
+
+
+
 
 int GetRandomDivisible(int divisor, int min, int max) {
     int start = (min + divisor - 1) / divisor; // ceil(min / divisor)
@@ -89,7 +99,8 @@ Rectangle spawn_block() {
 int main() {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "snake!!");
-    SetTargetFPS(10);
+    SetTargetFPS(60);
+    // SetTargetFPS(10);
                       // pos,   width
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     const float SPEED = 5.0f;
@@ -103,28 +114,10 @@ int main() {
 
         // changes rect.x, rect.y
         move_player(&player);
+        wrap_player(&player);
 
         // debug
         printf("pos: %f : %f\n", player.rect.x, player.rect.y);
-
-        if (player.rect.x > SCREEN_WIDTH) player.rect.x = -player.rect.width;
-        if (player.rect.x < -player.rect.width) player.rect.x = SCREEN_WIDTH;
-        if (player.rect.y > SCREEN_HEIGHT) player.rect.y = -player.rect.height;
-        if (player.rect.y < -player.rect.height) player.rect.y = SCREEN_HEIGHT;
-
-        if (player.rect.x + rectSize > SCREEN_WIDTH) {
-            DrawRectangle((int)(player.rect.x - SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
-        }
-        if (player.rect.x < rectSize) {
-            DrawRectangle((int)(player.rect.x + SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
-        }
-        if (player.rect.y + rectSize > SCREEN_HEIGHT) {
-            DrawRectangle((int)player.rect.x, (int)(player.rect.y - SCREEN_HEIGHT), rectSize, rectSize, BLACK);
-        }
-        if (player.rect.y < rectSize) {
-            DrawRectangle((int)player.rect.x, (int)(player.rect.y + SCREEN_HEIGHT), rectSize, rectSize, BLACK);
-        }
-
 
         if (CheckCollisionRecs(player.rect, rect)) {
             rect = spawn_block();
@@ -136,7 +129,18 @@ int main() {
             ClearBackground(RAYWHITE);
 
             DrawRectangleRec(player.rect, BLACK);
-
+            if (player.rect.x + rectSize > SCREEN_WIDTH) {
+                DrawRectangle((int)(player.rect.x - SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+            }
+            if (player.rect.x < rectSize) {
+                DrawRectangle((int)(player.rect.x + SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+            }
+            if (player.rect.y + rectSize > SCREEN_HEIGHT) {
+                DrawRectangle((int)player.rect.x, (int)(player.rect.y - SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+            }
+            if (player.rect.y < rectSize) {
+                DrawRectangle((int)player.rect.x, (int)(player.rect.y + SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+            }
             DrawRectangleRec(rect, RED);
             // DrawGrid(10, 10);
             DrawFPS(10, 10);
