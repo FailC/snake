@@ -2,7 +2,9 @@
 #include <stdio.h>
 
 const int SCREEN_WIDTH = 900;
-const int SCREEN_HEIGT = 500;
+const int SCREEN_HEIGHT = 500;
+
+const int GRIDSIZE= 30;
 
 typedef struct {
     Rectangle rect;
@@ -19,51 +21,39 @@ void move_player(Player *player) {
     static int key;
 
     key = GetKeyPressed();
-
     if (key != 0) {
         new_key = key;
     }
-
-    bool move_left_right = (int)player->rect.y % 10 == 0;
-    bool move_up_down = (int)player->rect.x % 10 == 0;
-
-    printf("current: %d pressed: %d\n", move_key, old_key);
-
+    bool move_left_right = (int)player->rect.y % GRIDSIZE == 0;
+    bool move_up_down = (int)player->rect.x % GRIDSIZE == 0;
     switch (new_key) {
         case KEY_UP:
             if (move_key != KEY_DOWN && move_up_down)  {
-                // switch to move up
                 move_key = KEY_UP;
             }
             break;
-
         case KEY_DOWN:
             if (move_key != KEY_UP && move_up_down) {
                 move_key = KEY_DOWN;
             }
             break;
-
         case KEY_LEFT:
             if (move_key != KEY_RIGHT && move_left_right) {
                 move_key = KEY_LEFT;
             }
             break;
-
         case KEY_RIGHT:
             if (move_key != KEY_LEFT && move_left_right) {
                 move_key = KEY_RIGHT;
             }
             break;
-
         default:
             break;
     }
-
     switch (move_key) {
         case KEY_UP:
                 player->rect.y -= player->PLAYER_SPEED;
             break;
-
         case KEY_DOWN:
                 player->rect.y += player->PLAYER_SPEED;
             break;
@@ -73,74 +63,74 @@ void move_player(Player *player) {
         case KEY_RIGHT:
                 player->rect.x += player->PLAYER_SPEED;
             break;
-    }
-
-}
-
-
-void _move_player(Player *player) {
-    static int old_key;
-
-    if (!(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_LEFT)) && ((IsKeyDown(KEY_UP) || old_key == KEY_UP) && !(IsKeyDown(KEY_DOWN)))) {
-        if ((player->rect.y != 0) && (int)player->rect.x % 10 == 0) {
-            player->rect.y -= player->PLAYER_SPEED;
-            old_key = KEY_UP;
-        }
-    }
-
-    if (!(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_LEFT)) && ((IsKeyDown(KEY_DOWN) ||  old_key == KEY_DOWN) && !(IsKeyDown(KEY_UP)))) {
-        if ((player->rect.x != 0) && (int)player->rect.x % 10 == 0) {
-            player->rect.y += player->PLAYER_SPEED;
-            old_key = KEY_DOWN;
-        }
-    }
-    if (!(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_UP)) && (IsKeyDown(KEY_RIGHT) || old_key == KEY_RIGHT)) {
-        if ((player->rect.y != 0) && (int)player->rect.y % 10 == 0) {
-            player->rect.x += player->PLAYER_SPEED;
-            old_key = KEY_RIGHT;
-        }
-    }
-    if (!(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_UP)) && (IsKeyDown(KEY_LEFT)|| old_key == KEY_LEFT)) {
-        if ((player->rect.y != 0) && (int)player->rect.y % 10 == 0) {
-            player->rect.x -= player->PLAYER_SPEED;
-            old_key = KEY_LEFT;
-        }
+        default:
+            break;
     }
 }
 
 
+int GetRandomDivisible(int divisor, int min, int max) {
+    int start = (min + divisor - 1) / divisor; // ceil(min / divisor)
+    int end = max / divisor;                  // floor(max / divisor)
+    if (start > end) return -1; // No valid number
+    int randomMultiple = GetRandomValue(start, end);
+    return randomMultiple * divisor;
+}
 
 Rectangle spawn_block() {
     // spawn random cube
-    int rand_value_x = GetRandomValue(10, SCREEN_WIDTH - 10);
-    int rand_value_y = GetRandomValue(10, SCREEN_HEIGT - 10);
-    Rectangle rect = {rand_value_x, rand_value_y, 20, 20};
-
+    int rand_value_x = GetRandomDivisible(GRIDSIZE, 10, SCREEN_WIDTH - 10);
+    int rand_value_y = GetRandomDivisible(GRIDSIZE, 10, SCREEN_HEIGHT - 10);
+    Rectangle rect = { rand_value_x, rand_value_y, GRIDSIZE, GRIDSIZE };
     return rect;
 }
 
+
 int main() {
 
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGT, "snake!!");
-    SetTargetFPS(30);
-
-    Rectangle p_rect = {50,50,20.0f,20.0f};
-    Player player = {p_rect, 0, 5.0f};
-
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "snake!!");
+    SetTargetFPS(10);
+                      // pos,   width
+    Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
+    const float SPEED = 5.0f;
+    Player player = {p_rect, .score = 0, SPEED};
     Rectangle rect = spawn_block();
+
+    int x, y;
+
+    int rectSize = player.rect.height;
     while (!WindowShouldClose()) {
 
+        // changes rect.x, rect.y
         move_player(&player);
 
-        // printf("pos: %f : %f\n", player.rect.x, player.rect.y);
+        // debug
+        printf("pos: %f : %f\n", player.rect.x, player.rect.y);
 
-        // switch sides if out of bounds
+        if (player.rect.x > SCREEN_WIDTH) player.rect.x = -player.rect.width;
+        if (player.rect.x < -player.rect.width) player.rect.x = SCREEN_WIDTH;
+        if (player.rect.y > SCREEN_HEIGHT) player.rect.y = -player.rect.height;
+        if (player.rect.y < -player.rect.height) player.rect.y = SCREEN_HEIGHT;
 
-        //printf("%d : %d\n", player.score, player_2.score);
-        // if (CheckCollisionRecs(player.rect, ball_rect)) {
-        //     collision = true;
-        //     printf("COLLISION!!\n");
+        if (player.rect.x + rectSize > SCREEN_WIDTH) {
+            DrawRectangle((int)(player.rect.x - SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+        }
+        if (player.rect.x < rectSize) {
+            DrawRectangle((int)(player.rect.x + SCREEN_WIDTH), (int)player.rect.y, rectSize, rectSize, BLACK);
+        }
+        if (player.rect.y + rectSize > SCREEN_HEIGHT) {
+            DrawRectangle((int)player.rect.x, (int)(player.rect.y - SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+        }
+        if (player.rect.y < rectSize) {
+            DrawRectangle((int)player.rect.x, (int)(player.rect.y + SCREEN_HEIGHT), rectSize, rectSize, BLACK);
+        }
 
+
+        if (CheckCollisionRecs(player.rect, rect)) {
+            rect = spawn_block();
+            // score++
+            // player gets longer
+        }
 
         BeginDrawing();
             ClearBackground(RAYWHITE);
@@ -148,6 +138,8 @@ int main() {
             DrawRectangleRec(player.rect, BLACK);
 
             DrawRectangleRec(rect, RED);
+            // DrawGrid(10, 10);
+            DrawFPS(10, 10);
 
             // char buffer[50];
             // snprintf(buffer, sizeof(buffer), "%d" , player.score);
