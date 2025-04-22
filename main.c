@@ -24,18 +24,12 @@ void game_over(Player *player) {
 float SPEED = 5.0f;
 
 void game_restart(Player *player) {
-    // pos_history
-    // bool
-    // index_g
-    // player, position, speed
-
     index_g = 0;
     for (int i = 0; i < SIZE; ++i) {
         pos_history[i] = (Vector2) {0.0f, 0.0f };
     }
     player->score = 0;
     player->PLAYER_SPEED = SPEED;
-
 }
 
 int main() {
@@ -63,6 +57,15 @@ int main() {
     bool spawn = true;
     bool game_is_over = false;
 
+
+    Vector2 offsets[4] = {
+        { -SCREEN_WIDTH, 0 },
+        { SCREEN_WIDTH, 0 },
+        { 0, -SCREEN_HEIGHT },
+        { 0, SCREEN_HEIGHT }
+    };
+
+
     while (!WindowShouldClose()) {
 
         // changes rect.x, rect.y
@@ -72,8 +75,6 @@ int main() {
 
         if (game_is_over && IsKeyPressed(KEY_SPACE)) {
             game_restart(&player);
-            
-
             score = false;
             spawn = true;
             game_is_over = false;
@@ -85,23 +86,6 @@ int main() {
             spawn = true;
             score = true;
         }
-        // create ghost rect for drawing
-        if (player.rect.x + rectSize > SCREEN_WIDTH) {
-            ghost_rect.x = player.rect.x - SCREEN_WIDTH;
-            ghost_rect.y = player.rect.y;
-        }
-        if (player.rect.x < rectSize) {
-            ghost_rect.x = player.rect.x + SCREEN_WIDTH;
-            ghost_rect.y = player.rect.y;
-        }
-        if (player.rect.y + rectSize > SCREEN_HEIGHT) {
-            ghost_rect.x = player.rect.x;
-            ghost_rect.y = player.rect.y - SCREEN_HEIGHT;
-        }
-        if (player.rect.y < rectSize) {
-            ghost_rect.x = player.rect.x;
-            ghost_rect.y = player.rect.y + SCREEN_HEIGHT;
-        }
 
         BeginDrawing();
             ClearBackground(RAYWHITE);
@@ -112,14 +96,21 @@ int main() {
                 DrawRectangleRec(player.rect, RED);
             }
 
-            if (player.rect.x + rectSize > SCREEN_WIDTH ||
-                player.rect.x < rectSize ||
-                player.rect.y + rectSize > SCREEN_HEIGHT ||
-                player.rect.y < rectSize) {
-                DrawRectangleRec(ghost_rect, BLACK);
-                if (CheckCollisionRecs(ghost_rect, eating_rect)) {
-                    spawn = true;
-                    score = true;
+            for (int i = 0; i < 4; ++i) {
+                Vector2 offset = offsets[i];
+                Rectangle ghost = player.rect;
+                ghost.x += offset.x;
+                ghost.y += offset.y;
+
+                // Only draw if player is near the screen edge in this direction
+                if (ghost.x + rectSize > 0 && ghost.x < SCREEN_WIDTH &&
+                    ghost.y + rectSize > 0 && ghost.y < SCREEN_HEIGHT) {
+                    DrawRectangleRec(ghost, BLACK);
+
+                    if (CheckCollisionRecs(ghost, eating_rect)) {
+                        spawn = true;
+                        score = true;
+                    }
                 }
             }
 
@@ -127,12 +118,37 @@ int main() {
                 int delay = follower_delay[i];
                 if (delay < SIZE) {
                     follower_pos[i] = get_history_pos(delay);
-                    if (!game_is_over) {
-                        DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, DARKGRAY);
-                    } else {
-                        DrawRectangleV(follower_pos[i], (Vector2){ GRIDSIZE, GRIDSIZE}, RED);
+
+                    Rectangle temp = {
+                        follower_pos[i].x,
+                        follower_pos[i].y,
+                        GRIDSIZE,
+                        GRIDSIZE
+                    };
+                    Color color = game_is_over ? RED : DARKGRAY;
+
+                    DrawRectangleRec(temp, color);
+
+                    Vector2 wrapOffsets[4] = {
+                        { -SCREEN_WIDTH, 0 },
+                        { SCREEN_WIDTH, 0 },
+                        { 0, -SCREEN_HEIGHT },
+                        { 0, SCREEN_HEIGHT }
+                    };
+
+                    for (int j = 0; j < 4; j++) {
+                        Vector2 offset = wrapOffsets[j];
+                        Rectangle ghost = {
+                            temp.x + offset.x,
+                            temp.y + offset.y,
+                                GRIDSIZE,
+                            GRIDSIZE
+                        };
+                        if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
+                            ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
+                            DrawRectangleRec(ghost, color);
+                        }
                     }
-                    Rectangle temp = {follower_pos[i].x, follower_pos[i].y, GRIDSIZE, GRIDSIZE};
                     if (CheckCollisionRecs(temp, eating_rect)) {
                         score = true;
                         spawn = true;
@@ -143,6 +159,8 @@ int main() {
                     }
                 }
             }
+
+
             if (score) player.score++;
             if (spawn) eating_rect = spawn_block();
             DrawRectangleRec(eating_rect, RED);
