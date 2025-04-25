@@ -13,7 +13,6 @@ typedef struct {
 } Player;
 
 void move_player(Player *player) {
-    static int old_key;
     static int new_key;
     static int key;
 

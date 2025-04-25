@@ -17,8 +17,27 @@ Vector2 get_history_pos(int steps_back) {
     return pos_history[i];
 }
 
+
+Vector2 get_prev_pos(int steps_back) {
+    int i = (index_g - steps_back + SIZE) % SIZE;
+    return pos_history[i];
+}
+
+Vector2 Vector2Subtract(Vector2 curr, Vector2 prev) {
+    return (Vector2){ curr.x - prev.x, curr.y - prev.y};
+}
+
+bool Vector2Equals(Vector2 curr, Vector2 prev) {
+    return (curr.x == prev.x && curr.y == prev.y) ? true : false;
+}
+
+
+int highscore = 0;
 void game_over(Player *player) {
     player->PLAYER_SPEED = 0;
+    if (player->score > highscore) {
+        highscore = player->score;
+    }
 }
 
 float SPEED = 5.0f;
@@ -32,17 +51,37 @@ void game_restart(Player *player) {
     player->PLAYER_SPEED = SPEED;
 }
 
+void count() {
+    static int count = 10;
+    count--;
+    if (count == 0) {
+        printf("count is zero\n");
+        count = 10;
+    }
+    printf("count: %d \n", count);
+}
+
+int filler_count = 0;
+void draw_filler(Rectangle ar[]) {
+    for (int i = 0; i <= filler_count; ++i) {
+        DrawRectangleRec(ar[i], BLACK);
+    }
+}
+
+// need to overwrite the rects in the array, maybe use ring buffer
+Rectangle filler_ar[30];
+
 int main() {
+
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
-    // SetTargetFPS(10);
-    printf("Hello solid snake!\n");
+    // SetTargetFPS(5);
+    // printf("Hello solid snake!\n");
 
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 0, SPEED};
 
     Rectangle eating_rect;
-    Rectangle ghost_rect = { 0, 0, GRIDSIZE, GRIDSIZE };
 
     int follower_count = FOLLOWER;
     Vector2 follower_pos[follower_count];
@@ -56,7 +95,11 @@ int main() {
     bool score = false;
     bool spawn = true;
     bool game_is_over = false;
+    bool pos_changed = true;
 
+    Vector2 last_pos;
+    Vector2 current_pos;
+    Vector2 last_dir = {1, 0};
 
     Vector2 offsets[4] = {
         { -SCREEN_WIDTH, 0 },
@@ -64,7 +107,10 @@ int main() {
         { 0, -SCREEN_HEIGHT },
         { 0, SCREEN_HEIGHT }
     };
-
+    bool changed_x = false;
+    bool changed_y = true;
+    bool direction_changed = true;
+    Rectangle filler_rec;
 
     while (!WindowShouldClose()) {
 
@@ -87,11 +133,33 @@ int main() {
             score = true;
         }
 
+        Vector2 curr = get_prev_pos(1);
+        Vector2 prev = get_prev_pos(2);
+
+        if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
+            changed_x = true;
+            changed_y = false;
+            direction_changed = true;
+        }
+        if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
+            changed_y = true;
+            changed_x = false;
+            direction_changed = true;
+        }
+        if (direction_changed) {
+            direction_changed = false;
+
+            filler_count++;
+            filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
+            filler_ar[filler_count] = filler_rec;
+        }
+
+
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
             if (!game_is_over) {
-                DrawRectangleRec(player.rect, BLACK);
+                DrawRectangleRec(player.rect, GREEN);
             } else {
                 DrawRectangleRec(player.rect, RED);
             }
@@ -160,6 +228,11 @@ int main() {
                 }
             }
 
+            // only draws the first block, need a function to store all the blocks and keep them until all follower blocks are moved through
+
+            // DrawRectangleRec(filler_rec, DARKGRAY);
+            count();
+            draw_filler(filler_ar);
 
             if (score) player.score++;
             if (spawn) eating_rect = spawn_block();
@@ -169,12 +242,16 @@ int main() {
             score = false;
 
             if (game_is_over) {
-                DrawText("GAME OVER!",100,100, 20, BLACK);
+                DrawText("GAME OVER!", 100, 100, 20, BLACK);
             }
-
             char buffer[50];
             snprintf(buffer, sizeof(buffer), "%d" , player.score * 100);
             DrawText(buffer, 150, 10, 20, BLACK);
+
+            char buf_highscore[50];
+            snprintf(buf_highscore, sizeof(buf_highscore), "%d" , highscore * 100);
+            DrawText(buf_highscore, 500, 10, 20, BLACK);
+
         EndDrawing();
     }
 
@@ -182,3 +259,4 @@ int main() {
 
     return 0;
 }
+
