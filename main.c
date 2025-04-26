@@ -23,13 +23,56 @@ Vector2 get_prev_pos(int steps_back) {
     return pos_history[i];
 }
 
-Vector2 Vector2Subtract(Vector2 curr, Vector2 prev) {
-    return (Vector2){ curr.x - prev.x, curr.y - prev.y};
+int filler_count = 0;
+Rectangle fill_blocks[100];
+bool direction_changed = false;
+bool changed_x = false;
+bool changed_y = true;
+Rectangle filler_rec;
+
+bool check_direction_change() {
+        Vector2 curr = get_prev_pos(1);
+        Vector2 prev = get_prev_pos(2);
+
+        if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
+            changed_x = true;
+            changed_y = false;
+            direction_changed = true;
+        }
+        if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
+            changed_y = true;
+            changed_x = false;
+            direction_changed = true;
+        }
+
+        if (direction_changed) {
+            direction_changed = false;
+            filler_count++;
+            // printf("%d\n", filler_count);
+            filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
+            fill_blocks[filler_count] = filler_rec;
+        }
+
+    return direction_changed;
 }
 
-bool Vector2Equals(Vector2 curr, Vector2 prev) {
-    return (curr.x == prev.x && curr.y == prev.y) ? true : false;
-}
+
+        // if (direction_changed) {
+        //     direction_changed = false;
+        //     filler_count++;
+        //     // printf("%d\n", filler_count);
+        //     filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
+        //     fill_blocks[filler_count] = filler_rec;
+        // }
+        //
+
+// Vector2 Vector2Subtract(Vector2 curr, Vector2 prev) {
+//     return (Vector2){ curr.x - prev.x, curr.y - prev.y};
+// }
+//
+// bool Vector2Equals(Vector2 curr, Vector2 prev) {
+//     return (curr.x == prev.x && curr.y == prev.y) ? true : false;
+// }
 
 
 int highscore = 0;
@@ -55,21 +98,17 @@ void count() {
     static int count = 10;
     count--;
     if (count == 0) {
-        printf("count is zero\n");
+        // printf("count is zero\n");
         count = 10;
     }
-    printf("count: %d \n", count);
+    // printf("count: %d \n", count);
 }
 
-int filler_count = 0;
 void draw_filler(Rectangle ar[]) {
     for (int i = 0; i <= filler_count; ++i) {
         DrawRectangleRec(ar[i], BLACK);
     }
 }
-
-// need to overwrite the rects in the array, maybe use ring buffer
-Rectangle filler_ar[30];
 
 int main() {
 
@@ -107,10 +146,6 @@ int main() {
         { 0, -SCREEN_HEIGHT },
         { 0, SCREEN_HEIGHT }
     };
-    bool changed_x = false;
-    bool changed_y = true;
-    bool direction_changed = true;
-    Rectangle filler_rec;
 
     while (!WindowShouldClose()) {
 
@@ -136,24 +171,10 @@ int main() {
         Vector2 curr = get_prev_pos(1);
         Vector2 prev = get_prev_pos(2);
 
-        if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
-            changed_x = true;
-            changed_y = false;
-            direction_changed = true;
+        // check if the direction changes and draw the block later
+        if (player.score > 1) {
+            bool dir_changed = check_direction_change();
         }
-        if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
-            changed_y = true;
-            changed_x = false;
-            direction_changed = true;
-        }
-        if (direction_changed) {
-            direction_changed = false;
-
-            filler_count++;
-            filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
-            filler_ar[filler_count] = filler_rec;
-        }
-
 
         BeginDrawing();
             ClearBackground(RAYWHITE);
@@ -164,6 +185,7 @@ int main() {
                 DrawRectangleRec(player.rect, RED);
             }
 
+            // draw ghost blocks out of bounds
             for (int i = 0; i < 4; ++i) {
                 Vector2 offset = offsets[i];
                 Rectangle ghost = player.rect;
@@ -182,57 +204,70 @@ int main() {
                 }
             }
 
-            for (int i = 0; i < player.score; ++i) {
-                int delay = follower_delay[i];
-                if (delay < SIZE) {
-                    follower_pos[i] = get_history_pos(delay);
+            // draw follow blocks
+            // for the last index, check collision with fill_blocks
+        for (int i = 0; i < player.score; ++i) {
+            int delay = follower_delay[i];
+            if (delay < SIZE) {
+                follower_pos[i] = get_history_pos(delay);
 
-                    Rectangle temp = {
-                        follower_pos[i].x,
-                        follower_pos[i].y,
-                        GRIDSIZE,
+                Rectangle temp = {
+                    follower_pos[i].x,
+                    follower_pos[i].y,
+                    GRIDSIZE,
+                    GRIDSIZE
+                };
+                Color color = game_is_over ? RED : DARKGRAY;
+
+                // test test
+
+                if (i == player.score - 1) {
+                    for (int k = 0; k <= filler_count; ++k) {
+                            if (CheckCollisionRecs(temp, fill_blocks[k])) {
+                                fill_blocks[k] = (Rectangle){0,0};
+                                printf("%d\n", k);
+                            }
+                        }
+                }
+
+                // test test
+
+                DrawRectangleRec(temp, color);
+
+                Vector2 wrapOffsets[4] = {
+                    { -SCREEN_WIDTH, 0 },
+                    { SCREEN_WIDTH, 0 },
+                    { 0, -SCREEN_HEIGHT },
+                    { 0, SCREEN_HEIGHT }
+                };
+
+                for (int j = 0; j < 4; j++) {
+                    Vector2 offset = wrapOffsets[j];
+                    Rectangle ghost = {
+                        temp.x + offset.x,
+                        temp.y + offset.y,
+                            GRIDSIZE,
                         GRIDSIZE
                     };
-                    Color color = game_is_over ? RED : DARKGRAY;
-
-                    DrawRectangleRec(temp, color);
-
-                    Vector2 wrapOffsets[4] = {
-                        { -SCREEN_WIDTH, 0 },
-                        { SCREEN_WIDTH, 0 },
-                        { 0, -SCREEN_HEIGHT },
-                        { 0, SCREEN_HEIGHT }
-                    };
-
-                    for (int j = 0; j < 4; j++) {
-                        Vector2 offset = wrapOffsets[j];
-                        Rectangle ghost = {
-                            temp.x + offset.x,
-                            temp.y + offset.y,
-                                GRIDSIZE,
-                            GRIDSIZE
-                        };
-                        if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
-                            ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
-                            DrawRectangleRec(ghost, color);
-                        }
-                    }
-                    if (CheckCollisionRecs(temp, eating_rect)) {
-                        score = true;
-                        spawn = true;
-                    }
-                    if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
-                        game_over(&player);
-                        game_is_over = true;
+                    if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
+                        ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
+                        DrawRectangleRec(ghost, color);
                     }
                 }
+                if (CheckCollisionRecs(temp, eating_rect)) {
+                    score = true;
+                    spawn = true;
+                }
+                if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
+                    game_over(&player);
+                    game_is_over = true;
+                }
             }
-
-            // only draws the first block, need a function to store all the blocks and keep them until all follower blocks are moved through
+        }
 
             // DrawRectangleRec(filler_rec, DARKGRAY);
             count();
-            draw_filler(filler_ar);
+            draw_filler(fill_blocks);
 
             if (score) player.score++;
             if (spawn) eating_rect = spawn_block();
