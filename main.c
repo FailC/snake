@@ -41,7 +41,7 @@ Rectangle filler_rec;
 int head = 0;
 int tail = 0;
 
-bool check_direction_change() {
+void _check_direction_change() {
         Vector2 curr = get_prev_pos(1);
         Vector2 prev = get_prev_pos(2);
 
@@ -58,17 +58,116 @@ bool check_direction_change() {
 
         if (direction_changed) {
             direction_changed = false;
-            // filler_count++;
-            // instead of filler_count use index HEAD
-            // printf("%d\n", filler_count);
-
             // move index or something
             filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
             fill_blocks[head++] = filler_rec;
         }
 
-    return direction_changed;
 }
+
+
+void __check_direction_change(Player *player) {
+    Vector2 curr = get_prev_pos(1);
+    Vector2 prev = get_prev_pos(2);
+
+    // Handle direction change for moving in the Y-axis
+    if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
+        changed_x = true;
+        changed_y = false;
+        direction_changed = true;
+    }
+    // Handle direction change for moving in the X-axis
+    if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
+        changed_y = true;
+        changed_x = false;
+        direction_changed = true;
+    }
+
+    if (direction_changed) {
+        direction_changed = false;
+
+        // Calculate the ghost position based on the current direction
+        Vector2 offset = {0, 0};
+        if (player->rect.x > SCREEN_WIDTH) {
+            offset.x = SCREEN_WIDTH;
+        } else if (player->rect.x < 0) {
+            offset.x = SCREEN_WIDTH;
+        }
+        if (player->rect.y > SCREEN_HEIGHT) {
+            offset.y = -SCREEN_HEIGHT;
+        } else if (player->rect.y < 0) {
+            offset.y = SCREEN_HEIGHT;
+        }
+
+        // Set the ghost position where the fill block should be drawn
+        Rectangle ghost_filler_rec = {
+            prev.x + offset.x,
+            prev.y + offset.y,
+            GRIDSIZE,
+            GRIDSIZE
+        };
+
+        // Store the ghost filler rectangle at the calculated position
+        fill_blocks[head++] = ghost_filler_rec;
+    }
+}
+
+
+void check_direction_change(Player *player) {
+    Vector2 curr = get_prev_pos(1);
+    Vector2 prev = get_prev_pos(2);
+
+    // Handle direction change for moving in the Y-axis
+    if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
+        changed_x = true;
+        changed_y = false;
+        direction_changed = true;
+    }
+    // Handle direction change for moving in the X-axis
+    if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
+        changed_y = true;
+        changed_x = false;
+        direction_changed = true;
+    }
+
+    if (direction_changed) {
+        direction_changed = false;
+
+        // Calculate the ghost position based on the current direction
+        Vector2 offset = {0, 0};
+
+        // Adjust the ghost position when the player leaves the right side of the screen
+        if (player->rect.x >= SCREEN_WIDTH) {
+            offset.x = -SCREEN_WIDTH;
+        }
+        // Adjust the ghost position when the player leaves the left side of the screen
+        else if (player->rect.x < 0) {
+            offset.x = SCREEN_WIDTH;
+        }
+
+        // Adjust the ghost position when the player leaves the bottom side of the screen
+        if (player->rect.y >= SCREEN_HEIGHT) {
+            offset.y = -SCREEN_HEIGHT;
+        }
+        // Adjust the ghost position when the player leaves the top side of the screen
+        else if (player->rect.y < 0) {
+            offset.y = SCREEN_HEIGHT;
+        }
+
+        // Calculate the ghost block's position based on the previous position + the offset
+        Rectangle ghost_filler_rec = {
+            prev.x + offset.x,
+            prev.y + offset.y,
+            GRIDSIZE,
+            GRIDSIZE
+        };
+
+        // Store the ghost filler rectangle at the calculated position
+        fill_blocks[head++] = ghost_filler_rec;
+
+    }
+}
+
 
 int highscore = 0;
 void game_over(Player *player) {
@@ -102,7 +201,7 @@ int main() {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
-    // SetTargetFPS(5);
+    // SetTargetFPS(10);
     // printf("Hello solid snake!\n");
 
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
@@ -159,6 +258,12 @@ int main() {
         Vector2 curr = get_prev_pos(1);
         Vector2 prev = get_prev_pos(2);
 
+        // this is somehow very important..
+        // puts the fill blocks in the array
+        if (player.score >= 1) {
+            check_direction_change(&player);
+        }
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -189,86 +294,160 @@ int main() {
 
         // draw follow blocks
         // for the last index, check collision with fill_blocks
+        // for (int i = 0; i < player.score; ++i) {
+        //     int delay = follower_delay[i];
+        //     if (delay < SIZE) {
+        //         follower_pos[i] = get_history_pos(delay);
+        //
+        //         Rectangle temp = {
+        //             follower_pos[i].x,
+        //             follower_pos[i].y,
+        //             GRIDSIZE,
+        //             GRIDSIZE
+        //         };
+        //         Color color = game_is_over ? RED : DARKGRAY;
+        //
+        //         if (i == player.score - 1) {
+        //             int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
+        //
+        //             for (int n = 0; n < buffer_active_count; ++n) {
+        //                 int index = (tail + n) % SIZE_FILL_BLOCK;
+        //                 if (CheckCollisionRecs(temp, fill_blocks[index])) {
+        //                     tail = (index + 1) % SIZE_FILL_BLOCK;
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //
+        //         DrawRectangleRec(temp, color);
+        //
+        //         Vector2 wrapOffsets[4] = {
+        //             { -SCREEN_WIDTH, 0 },
+        //             { SCREEN_WIDTH, 0 },
+        //             { 0, -SCREEN_HEIGHT },
+        //             { 0, SCREEN_HEIGHT }
+        //         };
+        //
+        //         for (int j = 0; j < 4; j++) {
+        //             Vector2 offset = wrapOffsets[j];
+        //             Rectangle ghost = {
+        //                 temp.x + offset.x,
+        //                 temp.y + offset.y,
+        //                     GRIDSIZE,
+        //                 GRIDSIZE
+        //             };
+        //             if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
+        //                 ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
+        //                 DrawRectangleRec(ghost, color);
+        //             }
+        //         }
+        //         if (CheckCollisionRecs(temp, eating_rect)) {
+        //             score = true;
+        //             spawn = true;
+        //         }
+        //         if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
+        //             // game_over(&player);
+        //             // game_is_over = true;
+        //         }
+        //     }
+        // }
+
+
         for (int i = 0; i < player.score; ++i) {
             int delay = follower_delay[i];
             if (delay < SIZE) {
                 follower_pos[i] = get_history_pos(delay);
 
+                // Create the player's current segment rectangle
                 Rectangle temp = {
                     follower_pos[i].x,
                     follower_pos[i].y,
                     GRIDSIZE,
                     GRIDSIZE
                 };
+
                 Color color = game_is_over ? RED : DARKGRAY;
 
-                // test test
-                // move tail
-
+                // Check for collision between the snake's head and the fill blocks
                 if (i == player.score - 1) {
                     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
-                    // printf("buffer_active_count: %d\n", buffer_active_count);
 
-                    // index jumps after a while to random? values up to 99
+                    // Check for collisions with the fill block
                     for (int n = 0; n < buffer_active_count; ++n) {
                         int index = (tail + n) % SIZE_FILL_BLOCK;
-                            if (CheckCollisionRecs(temp, fill_blocks[index])) {
-                                tail = (index + 1) % SIZE_FILL_BLOCK;
-                                break;
-                            }
+                        // Check for collision between this segment and the ghost block
+                        if (CheckCollisionRecs(temp, fill_blocks[index])) {
+                            tail = (index + 1) % SIZE_FILL_BLOCK;
+                            break;
                         }
+                    }
                 }
 
-                // test test
-
+                // Draw the player's body segment
                 DrawRectangleRec(temp, color);
 
+                // Offset for wrapping the fill block at the corners
                 Vector2 wrapOffsets[4] = {
-                    { -SCREEN_WIDTH, 0 },
-                    { SCREEN_WIDTH, 0 },
-                    { 0, -SCREEN_HEIGHT },
-                    { 0, SCREEN_HEIGHT }
+                    { -SCREEN_WIDTH, 0 },   // Left wrap
+                    { SCREEN_WIDTH, 0 },    // Right wrap
+                    { 0, -SCREEN_HEIGHT },  // Top wrap
+                    { 0, SCREEN_HEIGHT }    // Bottom wrap
                 };
 
+                // Check if the fill block (ghost) has wrapped and check for collision
                 for (int j = 0; j < 4; j++) {
                     Vector2 offset = wrapOffsets[j];
                     Rectangle ghost = {
                         temp.x + offset.x,
                         temp.y + offset.y,
-                            GRIDSIZE,
+                        GRIDSIZE,
                         GRIDSIZE
                     };
+
+                    // Only draw the ghost if it is within the screen bounds
                     if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
                         ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
                         DrawRectangleRec(ghost, color);
+
+                        // Check if the wrapped ghost block collides with the snake
+                        if (CheckCollisionRecs(temp, ghost)) {
+                            // Handle collision (game over or similar logic)
+                            // game_over(&player);
+                            // game_is_over = true;
+                        }
                     }
                 }
-                if (CheckCollisionRecs(temp, eating_rect)) {
-                    score = true;
-                    spawn = true;
-                }
-                if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
-                    // game_over(&player);
-                    // game_is_over = true;
-                }
+
+            // Check collision with the eating area
+            if (CheckCollisionRecs(temp, eating_rect)) {
+                score = true;
+                spawn = true;
+            }
+
+            // Check for self-collision (snake's head colliding with its body)
+            if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
+                // game_over(&player);
+                // game_is_over = true;
             }
         }
+    }
 
-            draw_filler();
 
-            if (score) player.score++;
-            if (spawn) eating_rect = spawn_block();
-            DrawRectangleRec(eating_rect, RED);
-            DrawFPS(10, 10);
-            spawn = false;
-            score = false;
+        draw_filler();
 
-            if (game_is_over) {
-                DrawText("GAME OVER!", 100, 100, 20, BLACK);
-            }
+        if (score) player.score++;
+        if (spawn) eating_rect = spawn_block();
+        DrawRectangleRec(eating_rect, RED);
+        DrawFPS(10, 10);
+        spawn = false;
+        score = false;
 
-            draw_int_to_text(player.score * 100, 150, 10);
-            draw_int_to_text(highscore * 100, 500, 10);
+        if (game_is_over) {
+            DrawText("GAME OVER!", 100, 100, 20, BLACK);
+        }
+
+        draw_int_to_text(player.score * 100, 150, 10);
+        draw_int_to_text(highscore * 100, 500, 10);
 
         EndDrawing();
     }
