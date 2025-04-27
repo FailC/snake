@@ -3,6 +3,7 @@
 #include "lib.c"
 
 #define FOLLOWER 250
+// history size:
 #define SIZE 2500
 Vector2 pos_history[SIZE];
 int index_g = 0;
@@ -17,18 +18,21 @@ Vector2 get_history_pos(int steps_back) {
     return pos_history[i];
 }
 
-
 Vector2 get_prev_pos(int steps_back) {
     int i = (index_g - steps_back + SIZE) % SIZE;
     return pos_history[i];
 }
 
 int filler_count = 0;
-Rectangle fill_blocks[100];
+#define SIZE_FILL_BLOCK 100
+Rectangle fill_blocks[SIZE_FILL_BLOCK];
 bool direction_changed = false;
 bool changed_x = false;
 bool changed_y = true;
 Rectangle filler_rec;
+
+int head = 0;
+int tail = 0;
 
 bool check_direction_change() {
         Vector2 curr = get_prev_pos(1);
@@ -47,33 +51,17 @@ bool check_direction_change() {
 
         if (direction_changed) {
             direction_changed = false;
-            filler_count++;
+            // filler_count++;
+            // instead of filler_count use index HEAD
             // printf("%d\n", filler_count);
+
+            // move index or something
             filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
-            fill_blocks[filler_count] = filler_rec;
+            fill_blocks[head++] = filler_rec;
         }
 
     return direction_changed;
 }
-
-
-        // if (direction_changed) {
-        //     direction_changed = false;
-        //     filler_count++;
-        //     // printf("%d\n", filler_count);
-        //     filler_rec = (Rectangle){ prev.x, prev.y, GRIDSIZE, GRIDSIZE };
-        //     fill_blocks[filler_count] = filler_rec;
-        // }
-        //
-
-// Vector2 Vector2Subtract(Vector2 curr, Vector2 prev) {
-//     return (Vector2){ curr.x - prev.x, curr.y - prev.y};
-// }
-//
-// bool Vector2Equals(Vector2 curr, Vector2 prev) {
-//     return (curr.x == prev.x && curr.y == prev.y) ? true : false;
-// }
-
 
 int highscore = 0;
 void game_over(Player *player) {
@@ -94,21 +82,14 @@ void game_restart(Player *player) {
     player->PLAYER_SPEED = SPEED;
 }
 
-void count() {
-    static int count = 10;
-    count--;
-    if (count == 0) {
-        // printf("count is zero\n");
-        count = 10;
+void draw_filler() {
+    int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
+    for (int n = 0; n < buffer_active_count; ++n) {
+        int index = (tail + n) % SIZE_FILL_BLOCK;
+        DrawRectangleRec(fill_blocks[index], DARKGRAY);
     }
-    // printf("count: %d \n", count);
 }
 
-void draw_filler(Rectangle ar[]) {
-    for (int i = 0; i <= filler_count; ++i) {
-        DrawRectangleRec(ar[i], BLACK);
-    }
-}
 
 int main() {
 
@@ -118,7 +99,7 @@ int main() {
     // printf("Hello solid snake!\n");
 
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
-    Player player = {p_rect, .score = 0, SPEED};
+    Player player = {p_rect, .score = 2, SPEED};
 
     Rectangle eating_rect;
 
@@ -172,37 +153,37 @@ int main() {
         Vector2 prev = get_prev_pos(2);
 
         // check if the direction changes and draw the block later
-        if (player.score > 1) {
-            bool dir_changed = check_direction_change();
+        if (player.score >= 1) {
+            bool _dir_changed = check_direction_change();
         }
 
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            if (!game_is_over) {
-                DrawRectangleRec(player.rect, GREEN);
-            } else {
-                DrawRectangleRec(player.rect, RED);
-            }
+        if (!game_is_over) {
+            DrawRectangleRec(player.rect, BLACK);
+        } else {
+            DrawRectangleRec(player.rect, RED);
+        }
 
-            // draw ghost blocks out of bounds
-            for (int i = 0; i < 4; ++i) {
-                Vector2 offset = offsets[i];
-                Rectangle ghost = player.rect;
-                ghost.x += offset.x;
-                ghost.y += offset.y;
+        // draw ghost blocks out of bounds
+        for (int i = 0; i < 4; ++i) {
+            Vector2 offset = offsets[i];
+            Rectangle ghost = player.rect;
+            ghost.x += offset.x;
+            ghost.y += offset.y;
 
-                // Only draw if player is near the screen edge in this direction
-                if (ghost.x + rectSize > 0 && ghost.x < SCREEN_WIDTH &&
-                    ghost.y + rectSize > 0 && ghost.y < SCREEN_HEIGHT) {
-                    DrawRectangleRec(ghost, BLACK);
+            // Only draw if player is near the screen edge in this direction
+            if (ghost.x + rectSize > 0 && ghost.x < SCREEN_WIDTH &&
+                ghost.y + rectSize > 0 && ghost.y < SCREEN_HEIGHT) {
+                DrawRectangleRec(ghost, BLACK);
 
-                    if (CheckCollisionRecs(ghost, eating_rect)) {
-                        spawn = true;
-                        score = true;
-                    }
+                if (CheckCollisionRecs(ghost, eating_rect)) {
+                    spawn = true;
+                    score = true;
                 }
             }
+        }
 
             // draw follow blocks
             // for the last index, check collision with fill_blocks
@@ -220,12 +201,19 @@ int main() {
                 Color color = game_is_over ? RED : DARKGRAY;
 
                 // test test
+                // move tail
 
                 if (i == player.score - 1) {
-                    for (int k = 0; k <= filler_count; ++k) {
-                            if (CheckCollisionRecs(temp, fill_blocks[k])) {
-                                fill_blocks[k] = (Rectangle){0,0};
-                                printf("%d\n", k);
+                    int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
+                    printf("buffer_active_count: %d\n", buffer_active_count);
+
+                    for (int n = 0; n < buffer_active_count; ++n) {
+                        int index = (tail + n) % SIZE_FILL_BLOCK;
+                            if (CheckCollisionRecs(temp, fill_blocks[index])) {
+                                // printf("COLLISION\n");
+                                tail = (index + 1) % SIZE_FILL_BLOCK;
+                                printf("%d\n", n);
+                                break;
                             }
                         }
                 }
@@ -265,9 +253,7 @@ int main() {
             }
         }
 
-            // DrawRectangleRec(filler_rec, DARKGRAY);
-            count();
-            draw_filler(fill_blocks);
+            draw_filler();
 
             if (score) player.score++;
             if (spawn) eating_rect = spawn_block();
