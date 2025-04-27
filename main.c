@@ -24,7 +24,7 @@ Vector2 get_prev_pos(int steps_back) {
 }
 
 int filler_count = 0;
-#define SIZE_FILL_BLOCK 100
+#define SIZE_FILL_BLOCK 1000
 Rectangle fill_blocks[SIZE_FILL_BLOCK];
 bool direction_changed = false;
 bool changed_x = false;
@@ -205,14 +205,15 @@ int main() {
 
                 if (i == player.score - 1) {
                     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
-                    printf("buffer_active_count: %d\n", buffer_active_count);
+                    // printf("buffer_active_count: %d\n", buffer_active_count);
 
+                    // index jumps after a while to random? values up to 99
                     for (int n = 0; n < buffer_active_count; ++n) {
                         int index = (tail + n) % SIZE_FILL_BLOCK;
                             if (CheckCollisionRecs(temp, fill_blocks[index])) {
-                                // printf("COLLISION\n");
+                                printf("COLLISION\n");
                                 tail = (index + 1) % SIZE_FILL_BLOCK;
-                                printf("%d\n", n);
+                                printf("index: %d\n", n);
                                 break;
                             }
                         }
@@ -247,8 +248,8 @@ int main() {
                     spawn = true;
                 }
                 if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
-                    game_over(&player);
-                    game_is_over = true;
+                    // game_over(&player);
+                    // game_is_over = true;
                 }
             }
         }
