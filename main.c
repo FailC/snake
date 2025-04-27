@@ -8,6 +8,13 @@
 Vector2 pos_history[SIZE];
 int index_g = 0;
 
+void draw_int_to_text(int element, int posX, int posY) {
+    int fontsize = 20;
+    char buffer[50];
+    snprintf(buffer, sizeof(buffer), "%d", element);
+    DrawText(buffer,posX, posY, fontsize, BLACK);
+}
+
 void save_pos(Vector2 pos) {
     pos_history[index_g] = pos;
     index_g = (index_g + 1) % SIZE;
@@ -152,11 +159,6 @@ int main() {
         Vector2 curr = get_prev_pos(1);
         Vector2 prev = get_prev_pos(2);
 
-        // check if the direction changes and draw the block later
-        if (player.score >= 1) {
-            bool _dir_changed = check_direction_change();
-        }
-
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -176,7 +178,7 @@ int main() {
             // Only draw if player is near the screen edge in this direction
             if (ghost.x + rectSize > 0 && ghost.x < SCREEN_WIDTH &&
                 ghost.y + rectSize > 0 && ghost.y < SCREEN_HEIGHT) {
-                DrawRectangleRec(ghost, BLACK);
+                DrawRectangleRec(ghost, GREEN);
 
                 if (CheckCollisionRecs(ghost, eating_rect)) {
                     spawn = true;
@@ -185,8 +187,8 @@ int main() {
             }
         }
 
-            // draw follow blocks
-            // for the last index, check collision with fill_blocks
+        // draw follow blocks
+        // for the last index, check collision with fill_blocks
         for (int i = 0; i < player.score; ++i) {
             int delay = follower_delay[i];
             if (delay < SIZE) {
@@ -211,9 +213,7 @@ int main() {
                     for (int n = 0; n < buffer_active_count; ++n) {
                         int index = (tail + n) % SIZE_FILL_BLOCK;
                             if (CheckCollisionRecs(temp, fill_blocks[index])) {
-                                printf("COLLISION\n");
                                 tail = (index + 1) % SIZE_FILL_BLOCK;
-                                printf("index: %d\n", n);
                                 break;
                             }
                         }
@@ -266,13 +266,9 @@ int main() {
             if (game_is_over) {
                 DrawText("GAME OVER!", 100, 100, 20, BLACK);
             }
-            char buffer[50];
-            snprintf(buffer, sizeof(buffer), "%d" , player.score * 100);
-            DrawText(buffer, 150, 10, 20, BLACK);
 
-            char buf_highscore[50];
-            snprintf(buf_highscore, sizeof(buf_highscore), "%d" , highscore * 100);
-            DrawText(buf_highscore, 500, 10, 20, BLACK);
+            draw_int_to_text(player.score * 100, 150, 10);
+            draw_int_to_text(highscore * 100, 500, 10);
 
         EndDrawing();
     }
