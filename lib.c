@@ -1,4 +1,5 @@
 #include "./raylib-5.5_linux_amd64/include/raylib.h"
+#include <stdio.h>
 
 const int SCREEN_WIDTH = 900;
 const int SCREEN_HEIGHT = 500;
@@ -11,6 +12,13 @@ typedef struct {
     int score;
     float PLAYER_SPEED;
 } Player;
+
+void draw_int_to_text(int element, int posX, int posY) {
+    int fontsize = 20;
+    char buffer[50];
+    snprintf(buffer, sizeof(buffer), "%d", element);
+    DrawText(buffer,posX, posY, fontsize, BLACK);
+}
 
 void move_player(Player *player) {
     static int new_key;
