@@ -1,10 +1,10 @@
 #include "./raylib-5.5_linux_amd64/include/raylib.h"
 #include <stdio.h>
 
-const int SCREEN_WIDTH = 900;
-const int SCREEN_HEIGHT = 500;
+#define SCREEN_WIDTH 900
+#define SCREEN_HEIGHT 500
+#define GRIDSIZE 50
 
-const int GRIDSIZE = 50;
 int move_key = KEY_DOWN;
 
 typedef struct {
@@ -13,7 +13,7 @@ typedef struct {
     float PLAYER_SPEED;
 } Player;
 
-void draw_int_to_text(int element, int posX, int posY) {
+void draw_int_to_text(const int element, const int posX, const int posY) {
     int fontsize = 20;
     char buffer[50];
     snprintf(buffer, sizeof(buffer), "%d", element);
@@ -80,7 +80,7 @@ void wrap_player(Player *player) {
     if (player->rect.y < -player->rect.height) player->rect.y = SCREEN_HEIGHT - rectSize;
 }
 
-int GetRandomDivisible(int divisor, int min, int max) {
+int GetRandomDivisible(const int divisor, const int min, const int max) {
     int start = (min + divisor - 1) / divisor; // ceil(min / divisor)
     int end = max / divisor;                  // floor(max / divisor)
     if (start > end) return -1; // No valid number

@@ -5,41 +5,43 @@
 #define FOLLOWER 250
 // history size:
 #define HISTORY_SIZE 2500
-Vector2 pos_history[HISTORY_SIZE];
-static int pos_index = 0;
 
+typedef struct {
+    Vector2 positions[HISTORY_SIZE];
+    int index;
+} posHistory;
 
-void save_pos(Vector2 pos) {
-    pos_history[pos_index] = pos;
-    pos_index = (pos_index + 1) % HISTORY_SIZE;
+void save_pos(posHistory *history,Vector2 const pos) {
+    history->positions[history->index] = pos;
+    history->index = (history->index + 1) % HISTORY_SIZE;
 }
 
-Vector2 get_history_pos(int steps_back) {
-    int i = (pos_index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
-    return pos_history[i];
+Vector2 get_history_pos(posHistory *history, const int steps_back) {
+    int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
+    return history->positions[i];
 }
 
-Vector2 get_prev_pos(int steps_back) {
-    int i = (pos_index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
-    return pos_history[i];
+Vector2 get_prev_pos(const posHistory *history, const int steps_back) {
+    int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
+    return history->positions[i];
 }
 
-int filler_count = 0;
+// int filler_count = 0; // what is this?
 // seg fault with small size
-#define SIZE_FILL_BLOCK 30
+#define SIZE_FILL_BLOCK 50
 Rectangle fill_blocks[SIZE_FILL_BLOCK];
 bool direction_changed = false;
 bool changed_x = false;
 bool changed_y = true;
-Rectangle filler_rec;
+// Rectangle filler_rec;
 
 // fixed, head is wrapping
-int head = 0;
-int tail = 0;
+static int head = 0;
+static int tail = 0;
 
-void check_direction_change(Player *player) {
-    Vector2 curr = get_prev_pos(1);
-    Vector2 prev = get_prev_pos(2);
+void check_direction_change(const Player *player, const posHistory *history) {
+    Vector2 curr = get_prev_pos(history, 1);
+    Vector2 prev = get_prev_pos(history, 2);
 
     // Handle direction change for moving in the Y-axis
     if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
@@ -91,20 +93,16 @@ void check_direction_change(Player *player) {
         if (head >= SIZE_FILL_BLOCK) {
             head = 0;
         }
-
     }
 }
 
-
-int highscore = 0;
-void game_over(Player *player) {
+void game_over(Player *player, int highscore) {
     player->PLAYER_SPEED = 0;
     if (player->score > highscore) {
         highscore = player->score;
     }
 }
 
-float SPEED = 5.0f;
 void draw_filler() {
     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
     for (int n = 0; n < buffer_active_count; ++n) {
@@ -113,10 +111,11 @@ void draw_filler() {
     }
 }
 
-void game_restart(Player *player) {
-    pos_index = 0;
+float SPEED = 5.0f;
+void game_restart(Player *player, posHistory *history) {
+    history->index = 0;
     for (int i = 0; i < HISTORY_SIZE; ++i) {
-        pos_history[i] = (Vector2) {0.0f, 0.0f };
+        history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
     player->score = 0;
     player->PLAYER_SPEED = SPEED;
@@ -132,6 +131,7 @@ int main() {
     // player
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 2, SPEED};
+    int highscore = 0;
 
     Rectangle eating_rect;
 
@@ -156,15 +156,17 @@ int main() {
         { 0, SCREEN_HEIGHT }
     };
 
+    posHistory history = {.index = 0};
+
     while (!WindowShouldClose()) {
 
         // changes rect.x, rect.y
         move_player(&player);
         wrap_player(&player);
-        save_pos((Vector2){ player.rect.x, player.rect.y });
+        save_pos(&history, (Vector2){ player.rect.x, player.rect.y });
 
         if (game_is_over && IsKeyPressed(KEY_SPACE)) {
-            game_restart(&player);
+            game_restart(&player, &history);
             score = false;
             spawn_eating_rect = true;
             game_is_over = false;
@@ -179,7 +181,7 @@ int main() {
 
         // important function, stores the fill blocks
         if (player.score >= 1) {
-            check_direction_change(&player);
+            check_direction_change(&player, &history);
             // printf("head: %d\n", head);
         }
 
@@ -216,7 +218,7 @@ int main() {
         for (int i = 0; i < player.score; ++i) {
             int delay = follower_delay[i];
             if (delay < HISTORY_SIZE) {
-                follower_pos[i] = get_history_pos(delay);
+                follower_pos[i] = get_history_pos(&history,delay);
 
                 Rectangle temp = {
                     follower_pos[i].x,
@@ -267,7 +269,7 @@ int main() {
                 }
                 if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
                     // debug, turn off collision
-                    // game_over(&player);
+                    // game_over(&player, highscore);
                     // game_is_over = true;
                 }
             }
