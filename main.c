@@ -3,43 +3,17 @@
 #include "lib.c"
 
 #define FOLLOWER 250
-// history size:
-#define HISTORY_SIZE 2500
 
-typedef struct {
-    Vector2 positions[HISTORY_SIZE];
-    int index;
-} posHistory;
 
-void save_pos(posHistory *history,Vector2 const pos) {
-    history->positions[history->index] = pos;
-    history->index = (history->index + 1) % HISTORY_SIZE;
-}
-
-Vector2 get_history_pos(posHistory *history, const int steps_back) {
-    int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
-    return history->positions[i];
-}
-
-Vector2 get_prev_pos(const posHistory *history, const int steps_back) {
-    int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
-    return history->positions[i];
-}
-
-// int filler_count = 0; // what is this?
-// seg fault with small size
-#define SIZE_FILL_BLOCK 50
-Rectangle fill_blocks[SIZE_FILL_BLOCK];
-bool direction_changed = false;
-bool changed_x = false;
-bool changed_y = true;
-// Rectangle filler_rec;
-
-// fixed, head is wrapping
 static int head = 0;
 static int tail = 0;
 
-void check_direction_change(const Player *player, const posHistory *history) {
+void check_direction_change(const Player *player, const posHistory *history, Rectangle fill_blocks[]) {
+
+    static bool direction_changed = false;
+    static bool changed_x = false;
+    static bool changed_y = true;
+
     Vector2 curr = get_prev_pos(history, 1);
     Vector2 prev = get_prev_pos(history, 2);
 
@@ -96,29 +70,13 @@ void check_direction_change(const Player *player, const posHistory *history) {
     }
 }
 
-void game_over(Player *player, int highscore) {
-    player->PLAYER_SPEED = 0;
-    if (player->score > highscore) {
-        highscore = player->score;
-    }
-}
 
-void draw_filler() {
+void draw_filler(Rectangle fill_blocks[]) {
     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
     for (int n = 0; n < buffer_active_count; ++n) {
         int index = (tail + n) % SIZE_FILL_BLOCK;
         DrawRectangleRec(fill_blocks[index], DARKGRAY);
     }
-}
-
-float SPEED = 5.0f;
-void game_restart(Player *player, posHistory *history) {
-    history->index = 0;
-    for (int i = 0; i < HISTORY_SIZE; ++i) {
-        history->positions[i]= (Vector2) {0.0f, 0.0f };
-    }
-    player->score = 0;
-    player->PLAYER_SPEED = SPEED;
 }
 
 
@@ -148,6 +106,7 @@ int main() {
     bool spawn_eating_rect = true;
     bool game_is_over = false;
 
+    Rectangle fill_blocks[SIZE_FILL_BLOCK];
 
     Vector2 offsets[4] = {
         { -SCREEN_WIDTH, 0 },
@@ -181,7 +140,7 @@ int main() {
 
         // important function, stores the fill blocks
         if (player.score >= 1) {
-            check_direction_change(&player, &history);
+            check_direction_change(&player, &history, fill_blocks);
             // printf("head: %d\n", head);
         }
 
@@ -276,7 +235,7 @@ int main() {
         }
 
         // draw fill blocks
-        draw_filler();
+        draw_filler(fill_blocks);
 
         if (score) player.score++;
         if (spawn_eating_rect) eating_rect = spawn_block();
