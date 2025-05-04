@@ -18,7 +18,8 @@ typedef struct {
     int index;
 } posHistory;
 
-void game_over(Player *player, int highscore);
+int load_file(void);
+void game_over(Player *player, int *highscore);
 void game_restart(Player *player, posHistory *history);
 bool direction_change(const posHistory *history);
 void save_pos(posHistory *history,Vector2 const pos);
@@ -28,6 +29,6 @@ void draw_int_to_text(const int element, const int posX, const int posY);
 void move_player(Player *player);
 void wrap_player(Player *player);
 int GetRandomDivisible(const int divisor, const int min, const int max);
-Rectangle spawn_block();
+Rectangle spawn_block(void);
 void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head);
 void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p);

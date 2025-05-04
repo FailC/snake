@@ -19,7 +19,13 @@ int main() {
     // player
     Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 2, SPEED};
+
+    // TODO: load highscore file
     int highscore = 0;
+    highscore = load_file();
+    if (!highscore) {
+        highscore = 0;
+    }
 
     Rectangle eating_rect;
 
@@ -163,8 +169,8 @@ int main() {
             }
             if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
                 // debug, turn off collision
-                // game_over(&player, highscore);
-                // game_is_over = true;
+                game_over(&player, &highscore);
+                game_is_over = true;
             }
         }
          }
@@ -190,7 +196,6 @@ int main() {
     }
 
     CloseWindow();
-
     return 0;
 }
 

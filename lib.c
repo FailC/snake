@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "lib.h"
 
 #define SCREEN_WIDTH 900
@@ -10,6 +11,25 @@
 
 int move_key = KEY_DOWN;
 
+
+int load_file() {
+    FILE *file;
+    char filename[] = "highscore.txt";
+    char buffer[100];
+
+    file = fopen(filename, "r");  // Open the file in read mode
+
+    if (file == NULL) {
+        printf("cant open file");
+        return 0;
+    }
+    fgets(buffer, sizeof(buffer), file);
+
+    fclose(file);
+    int highscore = atoi(buffer);
+    return highscore;
+}
+
 void game_restart(Player *player, posHistory *history) {
     history->index = 0;
     for (int i = 0; i < HISTORY_SIZE; ++i) {
@@ -19,11 +39,19 @@ void game_restart(Player *player, posHistory *history) {
     player->PLAYER_SPEED = SPEED;
 }
 
-void game_over(Player *player, int highscore) {
+void game_over(Player *player, int *highscore) {
     player->PLAYER_SPEED = 0;
-    if (player->score > highscore) {
-        highscore = player->score;
+    if (player->score > *highscore) {
+        *highscore = player->score;
     }
+    // write to file
+    FILE *file;
+    char *filename = "highscore.txt";
+    file = fopen(filename, "w");
+    if (!file) {
+        return;
+    }
+    fprintf(file, "%d", *highscore);
 }
 
 void save_pos(posHistory *history,Vector2 const pos) {
