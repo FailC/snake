@@ -1,5 +1,5 @@
-#include "./raylib-5.5_linux_amd64/include/raylib.h"
 #include <stdio.h>
+#include "lib.h"
 
 #define SCREEN_WIDTH 900
 #define SCREEN_HEIGHT 500
@@ -9,17 +9,6 @@
 #define SPEED 5.0f
 
 int move_key = KEY_DOWN;
-
-typedef struct {
-    Rectangle rect;
-    int score;
-    float PLAYER_SPEED;
-} Player;
-
-typedef struct {
-    Vector2 positions[HISTORY_SIZE];
-    int index;
-} posHistory;
 
 void game_restart(Player *player, posHistory *history) {
     history->index = 0;
@@ -59,6 +48,82 @@ void draw_int_to_text(const int element, const int posX, const int posY) {
     DrawText(buffer,posX, posY, fontsize, BLACK);
 }
 
+
+void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head) {
+    // Calculate the ghost position based on the current direction
+    Vector2 offset = {0, 0};
+    Vector2 prev = get_prev_pos(history, 2);
+
+    // Adjust the ghost position when the player leaves the right side of the screen
+    if (player->rect.x >= SCREEN_WIDTH) {
+        offset.x = -SCREEN_WIDTH;
+    }
+    // Adjust the ghost position when the player leaves the left side of the screen
+    else if (player->rect.x < 0) {
+        offset.x = SCREEN_WIDTH;
+    }
+
+    // Adjust the ghost position when the player leaves the bottoim side of the screen
+    if (player->rect.y >= SCREEN_HEIGHT) {
+        offset.y = -SCREEN_HEIGHT;
+    }
+    // Adjust the ghost position when the player leaves the top side of the screen
+    else if (player->rect.y < 0) {
+        offset.y = SCREEN_HEIGHT;
+    }
+
+    // Calculate the ghost block's position based on the previous position + the offset
+    Rectangle ghost_filler_rec = {
+        prev.x + offset.x,
+        prev.y + offset.y,
+        GRIDSIZE,
+        GRIDSIZE
+    };
+
+    // Store the ghost filler rectangle at the calculated position
+    fill_blocks[(*head)++] = ghost_filler_rec;
+    if (*head >= SIZE_FILL_BLOCK) {
+        *head = 0;
+    }
+}
+
+
+void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p) {
+    // meh
+    int tail = *tail_p;
+    int head = *head_p;
+    int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
+    for (int n = 0; n < buffer_active_count; ++n) {
+        int index = (tail + n) % SIZE_FILL_BLOCK;
+        DrawRectangleRec(fill_blocks[index], DARKGRAY);
+    }
+}
+
+bool direction_change(const posHistory *history) {
+    static bool changed_x = false;
+    static bool changed_y = true;
+
+    bool direction_changed = false;
+
+    Vector2 curr = get_prev_pos(history, 1);
+    Vector2 prev = get_prev_pos(history, 2);
+
+    // Handle direction change for moving in the Y-axis
+    if ((curr.x == prev.x) && (curr.y != prev.y) && changed_y) {
+        changed_x = true;
+        changed_y = false;
+        direction_changed = true;
+    }
+    // Handle direction change for moving in the X-axis
+    if ((curr.x != prev.x) && (curr.y == prev.y) && changed_x) {
+        changed_y = true;
+        changed_x = false;
+        direction_changed = true;
+    }
+
+    return direction_changed;
+}
+
 void move_player(Player *player) {
     static int new_key;
     static int key;
@@ -71,24 +136,16 @@ void move_player(Player *player) {
     bool move_up_down = (int)player->rect.x % GRIDSIZE == 0;
     switch (new_key) {
         case KEY_UP:
-            if (move_key != KEY_DOWN && move_up_down)  {
-                move_key = KEY_UP;
-            }
+            if (move_key != KEY_DOWN && move_up_down) move_key = KEY_UP;
             break;
         case KEY_DOWN:
-            if (move_key != KEY_UP && move_up_down) {
-                move_key = KEY_DOWN;
-            }
+            if (move_key != KEY_UP && move_up_down) move_key = KEY_DOWN;
             break;
         case KEY_LEFT:
-            if (move_key != KEY_RIGHT && move_left_right) {
-                move_key = KEY_LEFT;
-            }
+            if (move_key != KEY_RIGHT && move_left_right) move_key = KEY_LEFT;
             break;
         case KEY_RIGHT:
-            if (move_key != KEY_LEFT && move_left_right) {
-                move_key = KEY_RIGHT;
-            }
+            if (move_key != KEY_LEFT && move_left_right) move_key = KEY_RIGHT;
             break;
         default:
             break;
@@ -113,10 +170,10 @@ void move_player(Player *player) {
 
 void wrap_player(Player *player) {
     int rectSize = player->rect.height;
-    if (player->rect.x > SCREEN_WIDTH) player->rect.x = 0;
-    if (player->rect.x < -player->rect.width) player->rect.x = SCREEN_WIDTH - rectSize;
-    if (player->rect.y > SCREEN_HEIGHT) player->rect.y = 0;
-    if (player->rect.y < -player->rect.height) player->rect.y = SCREEN_HEIGHT - rectSize;
+    if (player->rect.x >= SCREEN_WIDTH) player->rect.x = 0;
+    if (player->rect.x <= -player->rect.width) player->rect.x = SCREEN_WIDTH - rectSize;
+    if (player->rect.y >= SCREEN_HEIGHT) player->rect.y = 0;
+    if (player->rect.y <= -player->rect.height) player->rect.y = SCREEN_HEIGHT - rectSize;
 }
 
 int GetRandomDivisible(const int divisor, const int min, const int max) {
