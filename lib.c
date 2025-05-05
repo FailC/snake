@@ -9,9 +9,9 @@
 #define HISTORY_SIZE 2500
 #define SIZE_FILL_BLOCK 50
 #define SPEED 5.0f
+#define FOLLOWER 250
 
 int move_key = KEY_DOWN;
-
 
 int load_file() {
     FILE *file;
@@ -31,16 +31,24 @@ int load_file() {
     return highscore;
 }
 
-void game_restart(Player *player, posHistory *history) {
+void game_restart(Player *player, posHistory *history, Rectangle fill_blocks[], int *head, int *tail) {
     history->index = 0;
+    *head = 0;
+    *tail = 0;
     for (int i = 0; i < HISTORY_SIZE; ++i) {
         history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
-    player->score = 2;
+
+    for (int i = 0; i < SIZE_FILL_BLOCK; ++i) {
+        fill_blocks[i] = (Rectangle) {0, 0};
+    }
+
+    player->score = 0;
     player->PLAYER_SPEED = SPEED;
 }
 
 void game_over(Player *player, int *highscore) {
+
     player->PLAYER_SPEED = 0;
     if (player->score > *highscore) {
         *highscore = player->score;

@@ -2,7 +2,6 @@
 #include "./raylib-5.5_linux_amd64/include/raylib.h"
 #include "./lib.c"
 
-#define FOLLOWER 250
 
 static int head = 0;
 static int tail = 0;
@@ -15,8 +14,8 @@ int main() {
     // SetTargetFPS(5);
 
     // player
-    Rectangle p_rect = { 0, 300, GRIDSIZE, GRIDSIZE };
-    Player player = {p_rect, .score = 2, SPEED};
+    Rectangle p_rect = { 100, 100, GRIDSIZE, GRIDSIZE };
+    Player player = {p_rect, .score = 0, SPEED};
 
     int highscore = 0;
     highscore = load_file();
@@ -57,7 +56,7 @@ int main() {
         save_pos(&history, (Vector2){ player.rect.x, player.rect.y });
 
         if (game_is_over && IsKeyPressed(KEY_SPACE)) {
-            game_restart(&player, &history);
+            game_restart(&player, &history, fill_blocks, &head, &tail);
             score = false;
             spawn_eating_rect = true;
             game_is_over = false;
@@ -111,66 +110,66 @@ int main() {
         // for the last index, check collision with fill_blocks
 
         for (int i = 0; i < player.score; ++i) {
-        int delay = follower_delay[i];
-        if (delay < HISTORY_SIZE) {
-            follower_pos[i] = get_prev_pos(&history,delay);
+            int delay = follower_delay[i];
+            if (delay < HISTORY_SIZE) {
+                follower_pos[i] = get_prev_pos(&history,delay);
 
-            Rectangle temp = {
-                follower_pos[i].x,
-                follower_pos[i].y,
-                GRIDSIZE,
-                GRIDSIZE
-            };
-            Color color = game_is_over ? RED : DARKGRAY;
-
-            if (i == player.score - 1) {
-                int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
-                // printf("active: %d\n", buffer_active_count);
-
-                for (int n = 0; n < buffer_active_count; ++n) {
-                    int index = (tail + n) % SIZE_FILL_BLOCK;
-                    // if (CheckCollisionRecs(temp, fill_blocks[index])) {
-                    Rectangle area = GetCollisionRec(temp, fill_blocks[index]);
-                    if (area.height == temp.height && area.width == temp.width) {
-                        tail = (index + 1) % SIZE_FILL_BLOCK;
-                    }
-                    break;
-                }
-            }
-
-            DrawRectangleRec(temp, color);
-
-            Vector2 wrapOffsets[4] = {
-                { -SCREEN_WIDTH, 0 },
-                { SCREEN_WIDTH, 0 },
-                { 0, -SCREEN_HEIGHT },
-                { 0, SCREEN_HEIGHT }
-            };
-
-            for (int j = 0; j < 4; j++) {
-                Vector2 offset = wrapOffsets[j];
-                Rectangle ghost = {
-                    temp.x + offset.x,
-                    temp.y + offset.y,
-                        GRIDSIZE,
+                Rectangle temp = {
+                    follower_pos[i].x,
+                    follower_pos[i].y,
+                    GRIDSIZE,
                     GRIDSIZE
                 };
-                if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
-                    ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
-                    DrawRectangleRec(ghost, color);
+                Color color = game_is_over ? RED : DARKGRAY;
+
+                if (i == player.score - 1) {
+                    int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
+                    // printf("active: %d\n", buffer_active_count);
+
+                    for (int n = 0; n < buffer_active_count; ++n) {
+                        int index = (tail + n) % SIZE_FILL_BLOCK;
+                        // if (CheckCollisionRecs(temp, fill_blocks[index])) {
+                        Rectangle area = GetCollisionRec(temp, fill_blocks[index]);
+                        if (area.height == temp.height && area.width == temp.width) {
+                            tail = (index + 1) % SIZE_FILL_BLOCK;
+                        }
+                        break;
+                    }
+                }
+
+                DrawRectangleRec(temp, color);
+
+                Vector2 wrapOffsets[4] = {
+                    { -SCREEN_WIDTH, 0 },
+                    { SCREEN_WIDTH, 0 },
+                    { 0, -SCREEN_HEIGHT },
+                    { 0, SCREEN_HEIGHT }
+                };
+
+                for (int j = 0; j < 4; j++) {
+                    Vector2 offset = wrapOffsets[j];
+                    Rectangle ghost = {
+                        temp.x + offset.x,
+                        temp.y + offset.y,
+                            GRIDSIZE,
+                        GRIDSIZE
+                    };
+                    if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
+                        ghost.y + GRIDSIZE > 0 && ghost.y < SCREEN_HEIGHT) {
+                        DrawRectangleRec(ghost, color);
+                    }
+                }
+                if (CheckCollisionRecs(temp, eating_rect)) {
+                    score = true;
+                    spawn_eating_rect = true;
+                }
+                if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
+                    // debug, turn off collision
+                    game_over(&player, &highscore);
+                    game_is_over = true;
                 }
             }
-            if (CheckCollisionRecs(temp, eating_rect)) {
-                score = true;
-                spawn_eating_rect = true;
-            }
-            if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
-                // debug, turn off collision
-                game_over(&player, &highscore);
-                game_is_over = true;
-            }
         }
-         }
 
         // draw fill blocks
         draw_filler(fill_blocks, &tail, &head);
@@ -188,6 +187,7 @@ int main() {
 
         draw_int_to_text(player.score * 100, 150, 10);
         draw_int_to_text(highscore * 100, 500, 10);
+        DrawText("Highscore", 350, 10, 20, BLACK);
 
         EndDrawing();
     }

@@ -20,7 +20,7 @@ typedef struct {
 
 int load_file(void);
 void game_over(Player *player, int *highscore);
-void game_restart(Player *player, posHistory *history);
+void game_restart(Player *player, posHistory *history, Rectangle fill_blocks[], int *head, int *tail);
 bool direction_change(const posHistory *history);
 void save_pos(posHistory *history,Vector2 const pos);
 Vector2 get_history_pos(posHistory *history, const int steps_back);
