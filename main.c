@@ -7,8 +7,6 @@
 static int head = 0;
 static int tail = 0;
 
-// if block goes out of bounds, top
-// no fill block gets drawn
 
 int main() {
 
@@ -65,7 +63,7 @@ int main() {
             game_is_over = false;
         }
 
-        printf("player-> %f : %f\n", player.rect.x, player.rect.y);
+        // printf("player-> %f : %f\n", player.rect.x, player.rect.y);
 
         if (CheckCollisionRecs(player.rect, eating_rect)) {
             spawn_eating_rect = true;
@@ -75,7 +73,7 @@ int main() {
         // important function, stores the fill blocks
         if (player.score >= 1) {
             if (direction_change(&history)) {
-                printf("direction changed\n");
+                // printf("direction changed\n");
                 insert_fill_block(&player, &history, fill_blocks, &head);
             }
             // printf("head: %d\n", head);
@@ -89,9 +87,6 @@ int main() {
         } else {
             DrawRectangleRec(player.rect, RED);
         }
-
-        // draw player ghost block out of bounds
-        // needs a second block if block is green and gets out of bounds again
 
         for (int i = 0; i < 4; ++i) {
             Vector2 offset = offsets[i];
