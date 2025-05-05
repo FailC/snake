@@ -27,28 +27,27 @@ int load_file() {
     fgets(buffer, sizeof(buffer), file);
 
     fclose(file);
+    // unsafe function
     int highscore = atoi(buffer);
     return highscore;
 }
 
 void game_restart(Player *player, posHistory *history, Rectangle fill_blocks[], int *head, int *tail) {
+    // reset all the game stuff
     history->index = 0;
     *head = 0;
     *tail = 0;
     for (int i = 0; i < HISTORY_SIZE; ++i) {
         history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
-
     for (int i = 0; i < SIZE_FILL_BLOCK; ++i) {
         fill_blocks[i] = (Rectangle) {0, 0};
     }
-
     player->score = 0;
     player->PLAYER_SPEED = SPEED;
 }
 
 void game_over(Player *player, int *highscore) {
-
     player->PLAYER_SPEED = 0;
     if (player->score > *highscore) {
         *highscore = player->score;
@@ -100,15 +99,15 @@ void insert_fill_block(Player *player, const posHistory *history, Rectangle fill
 }
 
 
-void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p) {
+void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p, bool game_is_over) {
     // meh
+    Color color = game_is_over? RED : DARKGRAY;
     int tail = *tail_p;
     int head = *head_p;
     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
     for (int n = 0; n < buffer_active_count; ++n) {
         int index = (tail + n) % SIZE_FILL_BLOCK;
-        DrawRectangleRec(fill_blocks[index], DARKGRAY);
-        // DrawRectangleRec(fill_blocks[index], GREEN);
+        DrawRectangleRec(fill_blocks[index], color);
     }
 }
 

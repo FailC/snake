@@ -172,7 +172,7 @@ int main() {
         }
 
         // draw fill blocks
-        draw_filler(fill_blocks, &tail, &head);
+        draw_filler(fill_blocks, &tail, &head, game_is_over);
 
         if (score) player.score++;
         if (spawn_eating_rect) eating_rect = spawn_block();

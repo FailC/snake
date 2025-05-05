@@ -31,4 +31,4 @@ void wrap_player(Player *player);
 int GetRandomDivisible(const int divisor, const int min, const int max);
 Rectangle spawn_block(void);
 void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head);
-void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p);
+void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p, bool game_is_over);
