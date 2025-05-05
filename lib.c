@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lib.h"
+#include "raylib-5.5_linux_amd64/include/raylib.h"
 
 #define SCREEN_WIDTH 900
 #define SCREEN_HEIGHT 500
@@ -15,7 +16,7 @@ int move_key = KEY_DOWN;
 int load_file() {
     FILE *file;
     char filename[] = "highscore.txt";
-    char buffer[100];
+    char buffer[12];
 
     file = fopen(filename, "r");  // Open the file in read mode
 
@@ -35,7 +36,7 @@ void game_restart(Player *player, posHistory *history) {
     for (int i = 0; i < HISTORY_SIZE; ++i) {
         history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
-    player->score = 0;
+    player->score = 2;
     player->PLAYER_SPEED = SPEED;
 }
 
@@ -59,11 +60,6 @@ void save_pos(posHistory *history,Vector2 const pos) {
     history->index = (history->index + 1) % HISTORY_SIZE;
 }
 
-Vector2 get_history_pos(posHistory *history, const int steps_back) {
-    int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
-    return history->positions[i];
-}
-
 Vector2 get_prev_pos(const posHistory *history, const int steps_back) {
     int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
     return history->positions[i];
@@ -77,38 +73,69 @@ void draw_int_to_text(const int element, const int posX, const int posY) {
 }
 
 
+// void _insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head) {
+//     // Calculate the ghost position based on the current direction
+//     Vector2 offset = {0, 0};
+//     Vector2 prev = get_prev_pos(history, 3);
+//
+//     // Adjust the ghost position when the player leaves the right side of the screen
+//     if (player->rect.x > SCREEN_WIDTH) {
+//         offset.x = -SCREEN_WIDTH;
+//     }
+//     // Adjust the ghost position when the player leaves the left side of the screen
+//     else if (player->rect.x < 0) {
+//         offset.x = SCREEN_WIDTH;
+//     }
+//     // Adjust the ghost position when the player leaves the bottoim side of the screen
+//     if (player->rect.y > SCREEN_HEIGHT) {
+//         offset.y = -SCREEN_HEIGHT;
+//     }
+//     // Adjust the ghost position when the player leaves the top side of the screen
+//     else if (player->rect.y < 0) {
+//         offset.y = SCREEN_HEIGHT;
+//     }
+//     // Calculate the ghost block's position based on the previous position + the offset
+//     Rectangle ghost_filler_rec = {
+//         prev.x + offset.x,
+//         prev.y + offset.y,
+//         GRIDSIZE,
+//         GRIDSIZE
+//     };
+
 void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head) {
     // Calculate the ghost position based on the current direction
     Vector2 offset = {0, 0};
     Vector2 prev = get_prev_pos(history, 2);
-
-    // Adjust the ghost position when the player leaves the right side of the screen
-    if (player->rect.x >= SCREEN_WIDTH) {
-        offset.x = -SCREEN_WIDTH;
-    }
-    // Adjust the ghost position when the player leaves the left side of the screen
-    else if (player->rect.x < 0) {
-        offset.x = SCREEN_WIDTH;
-    }
-
-    // Adjust the ghost position when the player leaves the bottoim side of the screen
-    if (player->rect.y >= SCREEN_HEIGHT) {
-        offset.y = -SCREEN_HEIGHT;
-    }
-    // Adjust the ghost position when the player leaves the top side of the screen
-    else if (player->rect.y < 0) {
-        offset.y = SCREEN_HEIGHT;
-    }
-
+    //
+    // // Adjust the ghost position when the player leaves the right side of the screen
+    // if (player->rect.x > SCREEN_WIDTH) {
+    //     offset.x = -SCREEN_WIDTH;
+    // }
+    // // Adjust the ghost position when the player leaves the left side of the screen
+    // else if (player->rect.x < 0) {
+    //     offset.x = SCREEN_WIDTH;
+    // }
+    // // Adjust the ghost position when the player leaves the bottoim side of the screen
+    // if (player->rect.y > SCREEN_HEIGHT) {
+    //     offset.y = -SCREEN_HEIGHT;
+    // }
+    // // Adjust the ghost position when the player leaves the top side of the screen
+    // else if (player->rect.y < 0) {
+    //     offset.y = SCREEN_HEIGHT;
+    // }
     // Calculate the ghost block's position based on the previous position + the offset
     Rectangle ghost_filler_rec = {
-        prev.x + offset.x,
-        prev.y + offset.y,
+        prev.x,
+        prev.y,
         GRIDSIZE,
         GRIDSIZE
     };
-
     // Store the ghost filler rectangle at the calculated position
+
+    // printf debug
+    printf("prev position-> %f : %f\n", prev.x, prev.y);
+    printf("ghost filler-> %f : %f\n", ghost_filler_rec.x, ghost_filler_rec.y);
+
     fill_blocks[(*head)++] = ghost_filler_rec;
     if (*head >= SIZE_FILL_BLOCK) {
         *head = 0;
@@ -124,6 +151,7 @@ void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p) {
     for (int n = 0; n < buffer_active_count; ++n) {
         int index = (tail + n) % SIZE_FILL_BLOCK;
         DrawRectangleRec(fill_blocks[index], DARKGRAY);
+        // DrawRectangleRec(fill_blocks[index], GREEN);
     }
 }
 

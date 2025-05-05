@@ -14,13 +14,12 @@ int main() {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "solid snake!!");
     SetTargetFPS(60);
-    // SetTargetFPS(10);
+    // SetTargetFPS(5);
 
     // player
-    Rectangle p_rect = { 50, 50, GRIDSIZE, GRIDSIZE };
+    Rectangle p_rect = { 0, 300, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 2, SPEED};
 
-    // TODO: load highscore file
     int highscore = 0;
     highscore = load_file();
     if (!highscore) {
@@ -66,7 +65,7 @@ int main() {
             game_is_over = false;
         }
 
-        // printf("%f : %f\n", player.rect.x, player.rect.y);
+        printf("player-> %f : %f\n", player.rect.x, player.rect.y);
 
         if (CheckCollisionRecs(player.rect, eating_rect)) {
             spawn_eating_rect = true;
@@ -75,8 +74,8 @@ int main() {
 
         // important function, stores the fill blocks
         if (player.score >= 1) {
-            // bool dir_changed = direction_change(&history);
             if (direction_change(&history)) {
+                printf("direction changed\n");
                 insert_fill_block(&player, &history, fill_blocks, &head);
             }
             // printf("head: %d\n", head);
@@ -103,7 +102,8 @@ int main() {
             // Only draw if player is near the screen edge in this direction
             if (ghost.x + rectSize > 0 && ghost.x < SCREEN_WIDTH &&
                 ghost.y + rectSize > 0 && ghost.y < SCREEN_HEIGHT) {
-                DrawRectangleRec(ghost, GREEN);
+                // DrawRectangleRec(ghost, GREEN);
+                DrawRectangleRec(ghost, BLACK);
 
                 if (CheckCollisionRecs(ghost, eating_rect)) {
                     spawn_eating_rect = true;
@@ -118,7 +118,7 @@ int main() {
         for (int i = 0; i < player.score; ++i) {
         int delay = follower_delay[i];
         if (delay < HISTORY_SIZE) {
-            follower_pos[i] = get_history_pos(&history,delay);
+            follower_pos[i] = get_prev_pos(&history,delay);
 
             Rectangle temp = {
                 follower_pos[i].x,
