@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lib.h"
-#include "raylib-5.5_linux_amd64/include/raylib.h"
 
 #define SCREEN_WIDTH 900
 #define SCREEN_HEIGHT 500
@@ -100,8 +99,8 @@ void insert_fill_block(Player *player, const posHistory *history, Rectangle fill
 
 
 void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p, bool game_is_over) {
+    Color color = game_is_over ? RED : DARKGRAY;
     // meh
-    Color color = game_is_over? RED : DARKGRAY;
     int tail = *tail_p;
     int head = *head_p;
     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);

@@ -151,7 +151,7 @@ int main() {
                     Rectangle ghost = {
                         temp.x + offset.x,
                         temp.y + offset.y,
-                            GRIDSIZE,
+                        GRIDSIZE,
                         GRIDSIZE
                     };
                     if (ghost.x + GRIDSIZE > 0 && ghost.x < SCREEN_WIDTH &&
