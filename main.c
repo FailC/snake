@@ -129,10 +129,12 @@ int main() {
 
                 for (int n = 0; n < buffer_active_count; ++n) {
                     int index = (tail + n) % SIZE_FILL_BLOCK;
-                    if (CheckCollisionRecs(temp, fill_blocks[index])) {
+                    // if (CheckCollisionRecs(temp, fill_blocks[index])) {
+                    Rectangle area = GetCollisionRec(temp, fill_blocks[index]);
+                    if (area.height == temp.height && area.width == temp.width) {
                         tail = (index + 1) % SIZE_FILL_BLOCK;
-                        break;
                     }
+                    break;
                 }
             }
 
