@@ -7,6 +7,10 @@
 #define SIZE_FILL_BLOCK 50
 #define SPEED 5.0f
 
+#define FOLLOWER 250
+
+#define RECT_WIDTH 100
+
 typedef struct {
     Rectangle rect;
     int score;
@@ -30,5 +34,5 @@ void move_player(Player *player);
 void wrap_player(Player *player);
 int GetRandomDivisible(const int divisor, const int min, const int max);
 Rectangle spawn_block(void);
-void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head);
+void insert_fill_block(const posHistory *history, Rectangle fill_blocks[], int *head);
 void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p, bool game_is_over);

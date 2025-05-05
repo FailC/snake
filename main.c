@@ -1,5 +1,4 @@
 // #include <stdio.h>
-#include "./raylib-5.5_linux_amd64/include/raylib.h"
 #include "./lib.c"
 
 
@@ -14,7 +13,7 @@ int main() {
     // SetTargetFPS(5);
 
     // player
-    Rectangle p_rect = { 100, 100, GRIDSIZE, GRIDSIZE };
+    Rectangle p_rect = { RECT_WIDTH, RECT_WIDTH, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 0, SPEED};
 
     int highscore = 0;
@@ -73,7 +72,7 @@ int main() {
         if (player.score >= 1) {
             if (direction_change(&history)) {
                 // printf("direction changed\n");
-                insert_fill_block(&player, &history, fill_blocks, &head);
+                insert_fill_block(&history, fill_blocks, &head);
             }
             // printf("head: %d\n", head);
         }

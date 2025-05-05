@@ -2,14 +2,6 @@
 #include <stdlib.h>
 #include "lib.h"
 
-#define SCREEN_WIDTH 900
-#define SCREEN_HEIGHT 500
-#define GRIDSIZE 50
-#define HISTORY_SIZE 2500
-#define SIZE_FILL_BLOCK 50
-#define SPEED 5.0f
-#define FOLLOWER 250
-
 int move_key = KEY_DOWN;
 
 int load_file() {
@@ -40,7 +32,7 @@ void game_restart(Player *player, posHistory *history, Rectangle fill_blocks[], 
         history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
     for (int i = 0; i < SIZE_FILL_BLOCK; ++i) {
-        fill_blocks[i] = (Rectangle) {0, 0};
+        fill_blocks[i] = (Rectangle) { 0, 0 };
     }
     player->score = 0;
     player->PLAYER_SPEED = SPEED;
@@ -78,8 +70,7 @@ void draw_int_to_text(const int element, const int posX, const int posY) {
     DrawText(buffer,posX, posY, fontsize, BLACK);
 }
 
-void insert_fill_block(Player *player, const posHistory *history, Rectangle fill_blocks[], int *head) {
-    Vector2 offset = {0, 0};
+void insert_fill_block(const posHistory *history, Rectangle fill_blocks[], int *head) {
     Vector2 prev = get_prev_pos(history, 2);
     Rectangle ghost_filler_rec = {
         prev.x,
