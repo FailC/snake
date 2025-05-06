@@ -23,7 +23,7 @@ int load_file() {
     return highscore;
 }
 
-void game_restart(Player *player, posHistory *history, Rectangle fill_blocks[], int *head, int *tail) {
+void game_restart(Player *player, Pos_history *history, Rectangle fill_blocks[], int *head, int *tail) {
     // reset all the game stuff
     history->index = 0;
     *head = 0;
@@ -53,12 +53,12 @@ void game_over(Player *player, int *highscore) {
     fprintf(file, "%d", *highscore);
 }
 
-void save_pos(posHistory *history,Vector2 const pos) {
+void save_pos(Pos_history *history,Vector2 const pos) {
     history->positions[history->index] = pos;
     history->index = (history->index + 1) % HISTORY_SIZE;
 }
 
-Vector2 get_prev_pos(const posHistory *history, const int steps_back) {
+Vector2 get_prev_pos(const Pos_history *history, const int steps_back) {
     int i = (history->index - steps_back + HISTORY_SIZE) % HISTORY_SIZE;
     return history->positions[i];
 }
@@ -70,7 +70,7 @@ void draw_int_to_text(const int element, const int posX, const int posY) {
     DrawText(buffer,posX, posY, fontsize, BLACK);
 }
 
-void insert_fill_block(const posHistory *history, Rectangle fill_blocks[], int *head) {
+void insert_fill_block(const Pos_history *history, Rectangle fill_blocks[], int *head) {
     Vector2 prev = get_prev_pos(history, 2);
     Rectangle ghost_filler_rec = {
         prev.x,
@@ -101,7 +101,7 @@ void draw_filler(Rectangle fill_blocks[], int *tail_p, int *head_p, bool game_is
     }
 }
 
-bool direction_change(const posHistory *history) {
+bool direction_change(const Pos_history *history) {
     static bool changed_x = false;
     static bool changed_y = true;
 
