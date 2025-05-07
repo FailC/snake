@@ -2,6 +2,7 @@
 #include "./lib.c"
 
 
+// include into snake struct?
 static int head = 0;
 static int tail = 0;
 
@@ -24,8 +25,6 @@ int main() {
     }
 
     Rectangle eating_rect;
-
-    // posHistory history = { .index = 0 };
 
     Snake snake = {};
 
@@ -177,7 +176,7 @@ int main() {
         // draw fill blocks
         draw_filler(snake.fill_blocks, &tail, &head, game.is_over);
 
-        if (score) player.score++;
+        if (score && !game.is_over) player.score++;
         if (spawn_eating_rect) eating_rect = spawn_block();
         DrawRectangleRec(eating_rect, RED);
         DrawFPS(10, 10);
