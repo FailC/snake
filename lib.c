@@ -51,6 +51,7 @@ void game_over(Player *player, int *highscore) {
         return;
     }
     fprintf(file, "%d", *highscore);
+    fclose(file);
 }
 
 void save_pos(posHistory *history,Vector2 const pos) {
