@@ -3,7 +3,7 @@
 - hardcoded 60 FPS
 - only arrow keys for controlling funny snake
 - no include guards
-- horrible make file
+- horrible Makefile
 
 #### requirements:
 - gcc / or any C compiler (change in Makefile)
