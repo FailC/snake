@@ -32,7 +32,7 @@ void game_restart(Player *player, Pos_history *history, Rectangle fill_blocks[],
         history->positions[i]= (Vector2) {0.0f, 0.0f };
     }
     for (int i = 0; i < SIZE_FILL_BLOCK; ++i) {
-        fill_blocks[i] = (Rectangle) { 0, 0 };
+        fill_blocks[i] = (Rectangle) { 0 };
     }
     player->score = 0;
     player->PLAYER_SPEED = SPEED;
