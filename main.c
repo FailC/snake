@@ -2,6 +2,7 @@
 #include "./lib.c"
 
 
+// include into snake struct?
 static int head = 0;
 static int tail = 0;
 
@@ -16,27 +17,27 @@ int main() {
     Rectangle p_rect = { RECT_WIDTH, RECT_WIDTH, GRIDSIZE, GRIDSIZE };
     Player player = {p_rect, .score = 0, SPEED};
 
-    int highscore = 0;
-    highscore = load_file();
-    if (!highscore) {
-        highscore = 0;
+    Game game = { .highscore = 0 };
+
+    game.highscore = load_file();
+    if (!game.highscore) {
+        game.highscore = 0;
     }
 
     Rectangle eating_rect;
 
-    Vector2 follower_pos[FOLLOWER];
-    int follower_delay[FOLLOWER];
+    Snake snake = {};
 
     for (int i = 0; i < FOLLOWER; ++i) {
-        follower_delay[i] = 10 * (i + 1);
+        snake.body.delay[i] = 10 * (i + 1);
     }
 
     int rectSize = player.rect.height;
     bool score = false;
     bool spawn_eating_rect = true;
-    bool game_is_over = false;
 
-    Rectangle fill_blocks[SIZE_FILL_BLOCK];
+    // bool game_is_over = false;
+    // Rectangle fill_blocks[SIZE_FILL_BLOCK];
 
     Vector2 offsets[4] = {
         { -SCREEN_WIDTH, 0 },
@@ -45,20 +46,19 @@ int main() {
         { 0, SCREEN_HEIGHT }
     };
 
-    posHistory history = { .index = 0 };
 
     while (!WindowShouldClose()) {
 
         // changes rect.x, rect.y
         move_player(&player);
         wrap_player(&player);
-        save_pos(&history, (Vector2){ player.rect.x, player.rect.y });
+        save_pos(&snake.history, (Vector2){ player.rect.x, player.rect.y });
 
-        if (game_is_over && IsKeyPressed(KEY_SPACE)) {
-            game_restart(&player, &history, fill_blocks, &head, &tail);
+        if (game.is_over && IsKeyPressed(KEY_SPACE)) {
+            game_restart(&player, &snake.history, snake.fill_blocks, &head, &tail);
             score = false;
             spawn_eating_rect = true;
-            game_is_over = false;
+            game.is_over = false;
         }
 
         // printf("player-> %f : %f\n", player.rect.x, player.rect.y);
@@ -70,9 +70,9 @@ int main() {
 
         // important function, stores the fill blocks
         if (player.score >= 1) {
-            if (direction_change(&history)) {
+            if (direction_change(&snake.history)) {
                 // printf("direction changed\n");
-                insert_fill_block(&history, fill_blocks, &head);
+                insert_fill_block(&snake.history, snake.fill_blocks, &head);
             }
             // printf("head: %d\n", head);
         }
@@ -80,7 +80,7 @@ int main() {
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        if (!game_is_over) {
+        if (!game.is_over) {
             DrawRectangleRec(player.rect, BLACK);
         } else {
             DrawRectangleRec(player.rect, RED);
@@ -109,17 +109,19 @@ int main() {
         // for the last index, check collision with fill_blocks
 
         for (int i = 0; i < player.score; ++i) {
-            int delay = follower_delay[i];
+            // int delay = follower_delay[i];
+            int delay = snake.body.delay[i];
             if (delay < HISTORY_SIZE) {
-                follower_pos[i] = get_prev_pos(&history,delay);
+                // follower_pos[i] = get_prev_pos(&history,delay);
+                snake.body.pos[i] = get_prev_pos(&snake.history, delay);
 
                 Rectangle temp = {
-                    follower_pos[i].x,
-                    follower_pos[i].y,
+                    snake.body.pos[i].x,
+                    snake.body.pos[i].y,
                     GRIDSIZE,
                     GRIDSIZE
                 };
-                Color color = game_is_over ? RED : DARKGRAY;
+                Color color = game.is_over ? RED : DARKGRAY;
 
                 if (i == player.score - 1) {
                     int buffer_active_count = (head >= tail) ? (head - tail) : (SIZE_FILL_BLOCK - tail + head);
@@ -128,7 +130,8 @@ int main() {
                     for (int n = 0; n < buffer_active_count; ++n) {
                         int index = (tail + n) % SIZE_FILL_BLOCK;
                         // if (CheckCollisionRecs(temp, fill_blocks[index])) {
-                        Rectangle area = GetCollisionRec(temp, fill_blocks[index]);
+                        // Rectangle area = GetCollisionRec(temp, fill_blocks[index]);
+                        Rectangle area = GetCollisionRec(temp, snake.fill_blocks[index]);
                         if (area.height == temp.height && area.width == temp.width) {
                             tail = (index + 1) % SIZE_FILL_BLOCK;
                         }
@@ -164,28 +167,28 @@ int main() {
                 }
                 if (i != 0 && CheckCollisionRecs(temp, player.rect)) {
                     // debug, turn off collision
-                    game_over(&player, &highscore);
-                    game_is_over = true;
+                    game_over(&player, &game.highscore);
+                    game.is_over = true;
                 }
             }
         }
 
         // draw fill blocks
-        draw_filler(fill_blocks, &tail, &head, game_is_over);
+        draw_filler(snake.fill_blocks, &tail, &head, game.is_over);
 
-        if (score) player.score++;
+        if (score && !game.is_over) player.score++;
         if (spawn_eating_rect) eating_rect = spawn_block();
         DrawRectangleRec(eating_rect, RED);
         DrawFPS(10, 10);
         spawn_eating_rect = false;
         score = false;
 
-        if (game_is_over) {
+        if (game.is_over) {
             DrawText("GAME OVER!", 100, 100, 20, BLACK);
         }
 
         draw_int_to_text(player.score * 100, 150, 10);
-        draw_int_to_text(highscore * 100, 500, 10);
+        draw_int_to_text(game.highscore * 100, 500, 10);
         DrawText("Highscore", 350, 10, 20, BLACK);
 
         EndDrawing();
