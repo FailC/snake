@@ -29,7 +29,8 @@ int main() {
     Snake snake = {};
 
     for (int i = 0; i < FOLLOWER; ++i) {
-        snake.body.delay[i] = 10 * (i + 1);
+        int step_size = GRIDSIZE / SPEED;
+        snake.body.delay[i] = step_size * (i + 1);
     }
 
     int rectSize = player.rect.height;
