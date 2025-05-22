@@ -24,7 +24,7 @@ int main() {
         game.highscore = 0;
     }
 
-    Rectangle eating_rect;
+    Rectangle eating_rect = {};
 
     Snake snake = {};
 
