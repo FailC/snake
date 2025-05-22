@@ -18,8 +18,7 @@ int load_file() {
     fgets(buffer, sizeof(buffer), file);
 
     fclose(file);
-    // unsafe function
-    int highscore = atoi(buffer);
+    int highscore = strtol(buffer, NULL, 10);
     return highscore;
 }
 
