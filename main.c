@@ -20,9 +20,9 @@ int main() {
     Game game = { .highscore = 0 };
 
     game.highscore = load_file();
-    if (!game.highscore) {
-        game.highscore = 0;
-    }
+    // if (!game.highscore) {
+    //     game.highscore = 0;
+    // }
 
     Rectangle eating_rect = {};
 
