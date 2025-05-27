@@ -186,6 +186,7 @@ int main() {
 
         if (game.is_over) {
             DrawText("GAME OVER!", 100, 100, 20, BLACK);
+            DrawText("PRESS SPACE TO RESTART!", 100, 150, 20, BLACK);
         }
 
         draw_int_to_text(player.score * 100, 150, 10);
